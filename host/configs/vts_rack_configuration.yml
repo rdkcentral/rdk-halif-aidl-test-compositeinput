@@ -63,17 +63,17 @@ rackConfig:
                         - default:
                             type: "ssh"
                             port: 7722
-                            username: "root"
-                            ip: "127.0.0.1" #IP address
-                            password: "tel@123"
-                            prompt: "~#" # Prompt string on console
+                            username: ""
+                            ip: "" #IP address
+                            password: ""
+                            prompt: "" # Prompt string on console
                         - ssh_hal_test:
                             type: "ssh"
                             port: 7722
-                            username: "root"
-                            ip: "127.0.0.1" #IP address
-                            password: "tel@123"
-                            prompt: "~#" # Prompt string on console
+                            username: ""
+                            ip: "" #IP address
+                            password: ""
+                            prompt: "" # Prompt string on console
                     outbound:
                         download_url: "tftp://tftp-server.com/rack1/slot1/"    # download location for the CPE device
                         upload_url: "sftp://server-address/home/workspace/tftp/rack1/slot1/" # upload location
@@ -83,8 +83,8 @@ rackConfig:
                     compositeController:
                         type: virtual-composite-controller
                         vendor: "vComponent"
-                        address: "127.0.0.1" # Needs to be be filled out with IP address
-                        username: "root" # Needs to be filled out with login username
-                        password: 'tel@123' # Needs to be filled out with login password
+                        address: "" # Needs to be be filled out with IP address
+                        username: "" # Needs to be filled out with login username
+                        password: '' # Needs to be filled out with login password
                         port: 7722
                         control_port: 8080
