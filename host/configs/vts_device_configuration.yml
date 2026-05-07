@@ -27,7 +27,7 @@ deviceConfig:
         platform:   "vDevice"
         model:      "VTV"
         soc_vendor: "intel"
-        target_directory: "/home/root/thanu/"
+        target_directory: "/tmp/"
         compositeinput_process_name: "Vendor-CompositeInput"
         prompt: "~#" # Prompt string on console
         test:
