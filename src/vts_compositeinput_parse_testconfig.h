@@ -58,6 +58,22 @@ typedef struct compositeInputSignalConfig
     uint32_t maxWaitTimeMs;
 } compositeInputSignalConfig_t;
 
+typedef struct compositeInputVideoModeEntry
+{
+    int32_t width;
+    int32_t height;
+    bool    interlaced;
+    float   framerate;
+} compositeInputVideoModeEntry_t;
+
+typedef struct compositeInputVideoModeConfig
+{
+    int32_t portId;
+    compositeInputVideoModeEntry_t videomode1;
+    compositeInputVideoModeEntry_t videomode2;
+    uint32_t maxWaitTimeMs;
+} compositeInputVideoModeConfig_t;
+
 typedef struct compositeInputPropertyTestItem
 {
     std::string propertyName;
@@ -78,6 +94,10 @@ UT_status_t vts_compositeinput_parse_connectionTest(
 UT_status_t vts_compositeinput_parse_signalTest(
     char *configurationFile, const char *module, const char *testGroup,
     const char *testName, std::vector<compositeInputSignalConfig_t>& configs);
+
+UT_status_t vts_compositeinput_parse_videoModeTest(
+    char *configurationFile, const char *module, const char *testGroup,
+    const char *testName, std::vector<compositeInputVideoModeConfig_t>& configs);
 
 UT_status_t vts_compositeinput_parse_propertyTest(
     char *configurationFile, const char *module, const char *testGroup,

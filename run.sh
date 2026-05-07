@@ -50,7 +50,7 @@ start_vcomponent_service()
     ${RUN_DIR}/$VCOMPONENT_SERVICE_NAME -c "$user_config" &
     vcomponentservice_pid=$!
     # Wait for service to be ready
-    sleep 1
+    sleep 10
 }
 
 if check_process $VCOMPONENT_SERVICE_NAME; then
