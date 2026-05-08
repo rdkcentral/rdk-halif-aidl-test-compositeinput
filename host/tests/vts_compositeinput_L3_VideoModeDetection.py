@@ -60,11 +60,11 @@ class VTS_COMPOSITEINPUT_L3_VideoModeDetection(compositeInputHelperClass):
 
     def videoModeThread(self):
         """
-        Background thread that drives the two sequential video mode changes.
+        Background thread that drives sequential video mode changes.
 
-        Reads videomode1 and videomode2 from the test config for each port and
-        sends them via setVideoMode(). The first triggers the initial
-        onVideoModeChanged callback; the second triggers the source-switch callback.
+        Reads the ``videomode`` list from the test config for each port and
+        sends each entry via setVideoMode(). Each entry triggers one
+        onVideoModeChanged callback in the C++ test.
 
         An initial delay allows the C++ test to initialize and start the port
         before video mode events are sent.
@@ -73,26 +73,16 @@ class VTS_COMPOSITEINPUT_L3_VideoModeDetection(compositeInputHelperClass):
         ports = self.test_config_data[self.moduleName][self.testLevel][self.testcase]['ports']
         for port in ports:
             port_id = port.get('id')
-            vm1 = port.get('videomode1', {})
-            vm2 = port.get('videomode2', {})
+            videomodes = port.get('videomode', [])
 
-            # Send first video mode (triggers first onVideoModeChanged)
-            self.compositeController.setVideoMode(
-                port_id,
-                vm1.get('width'),
-                vm1.get('height'),
-                vm1.get('interlaced', False),
-                float(vm1.get('framerate', 0))
-            )
-
-            # Send second video mode (triggers second onVideoModeChanged)
-            self.compositeController.setVideoMode(
-                port_id,
-                vm2.get('width'),
-                vm2.get('height'),
-                vm2.get('interlaced', False),
-                float(vm2.get('framerate', 0))
-            )
+            for vm in videomodes:
+                self.compositeController.setVideoMode(
+                    port_id,
+                    vm.get('width'),
+                    vm.get('height'),
+                    vm.get('interlaced', False),
+                    float(vm.get('framerate', 0))
+                )
             time.sleep(1)
 
     def testFunction(self):

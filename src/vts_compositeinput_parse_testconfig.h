@@ -69,8 +69,7 @@ typedef struct compositeInputVideoModeEntry
 typedef struct compositeInputVideoModeConfig
 {
     int32_t portId;
-    compositeInputVideoModeEntry_t videomode1;
-    compositeInputVideoModeEntry_t videomode2;
+    std::vector<compositeInputVideoModeEntry_t> videomodes;
     uint32_t maxWaitTimeMs;
 } compositeInputVideoModeConfig_t;
 

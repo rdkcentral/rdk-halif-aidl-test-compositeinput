@@ -510,7 +510,7 @@ private:
     bool m_connectionChanged{false};
     bool m_connected{false};
     bool m_signalStatusChanged{false};
-    ::com::rdk::hal::compositeinput::SignalStatus m_signalStatus;
+    ::com::rdk::hal::compositeinput::SignalStatus m_signalStatus{::com::rdk::hal::compositeinput::SignalStatus::NO_SIGNAL};
 };
 
 android::sp<com::rdk::hal::compositeinput::ICompositeInputPort> getCompositeInputPort(int32_t portId);

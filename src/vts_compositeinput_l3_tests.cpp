@@ -425,13 +425,10 @@ UT_ADD_TEST(VTS_L3_COMPOSITEINPUT, ConnectionTestAfterStart)
  * | Variation / Step | Description | Test Data | Expected Result | Notes |
  * | :----: | --------- | ---------- |-------------- | ----- |
  * | 01 | Start composite input port with active source | portId from config | Port transitions to STARTED | Should Pass |
- * | 02 | Wait for first onVideoModeChanged (videomode1 from initial signal STABLE) | none | Callback received | Should Pass |
- * | 03 | Validate first callback VideoResolution matches videomode1 from config | videomode1 config | pixelWidth, pixelHeight, interlaced, frameRateInHz match | Should Pass |
- * | 04 | Verify getStatus().detectedResolution matches first callback VideoResolution | none | Values match | Should Pass |
- * | 05 | Wait for second onVideoModeChanged (videomode2 after vcomponent switches source) | none | Callback received | Should Pass |
- * | 06 | Validate second callback VideoResolution matches videomode2 from config | videomode2 config | pixelWidth, pixelHeight, interlaced, frameRateInHz match | Should Pass |
- * | 07 | Verify getStatus().detectedResolution matches second callback VideoResolution | none | Values match | Should Pass |
- * | 08 | Stop and close port | none | Port closes successfully | Should Pass |
+ * | 02 | For each videomode entry N: wait for onVideoModeChanged | none | Callback received | Should Pass |
+ * | 03 | Validate callback VideoResolution matches videomode[N] from config | videomode[N] config | pixelWidth, pixelHeight, interlaced, frameRateInHz match | Should Pass |
+ * | 04 | Verify getStatus().detectedResolution matches callback VideoResolution | none | Values match | Should Pass |
+ * | 05 | Stop and close port | none | Port closes successfully | Should Pass |
  *
  * **Refer:** [compositeinput_High-Level_TestSpecification](../../docs/pages/compositeinput_High-Level_TestSpecification.md)
  */
@@ -449,7 +446,8 @@ UT_ADD_TEST(VTS_L3_COMPOSITEINPUT, VideoModeDetection)
 
     for (const auto& cfg : configs)
     {
-        UT_LOG_INFO("Testing port[%d] for video mode detection\n", cfg.portId);
+        UT_LOG_INFO("Testing port[%d] for video mode detection (%zu modes)\n",
+                    cfg.portId, cfg.videomodes.size());
 
         StartPort(cfg.portId);
         bool portFound = false;
@@ -477,76 +475,51 @@ UT_ADD_TEST(VTS_L3_COMPOSITEINPUT, VideoModeDetection)
             UT_ASSERT_EQUAL(portStatus0.signalStatus, SignalStatus::STABLE);
             UT_ASSERT_TRUE(portStatus0.connected);
             UT_ASSERT_TRUE(portStatus0.active);
-            if (!portStatus0.connected || !portStatus0.active) 
+            if (!portStatus0.connected || !portStatus0.active)
             {
                 UT_LOG_ERROR("Port[%d] is not connected and active after start, cannot proceed with video mode detection test\n", cfg.portId);
                 continue;
             }
-            /* Wait for first onVideoModeChanged (videomode1 from initial signal STABLE) */
-            VideoResolution callbackResolution1 = {};
-            bool videoModeReceived1 = controllerListener->getNextVideoModeChange(callbackResolution1, timeout);
-            UT_LOG_INFO("Port[%d] onVideoModeChanged (1st) received: %s\n",
-                        cfg.portId, videoModeReceived1 ? "true" : "false");
-            UT_ASSERT_TRUE(videoModeReceived1);
-            UT_LOG_INFO("Port[%d] VideoResolution (1st): pixelWidth=%d, pixelHeight=%d, "
-                        "interlaced=%s, frameRateInHz=%.2f\n",
-                        cfg.portId, callbackResolution1.pixelWidth, callbackResolution1.pixelHeight,
-                        callbackResolution1.interlaced ? "true" : "false",
-                        callbackResolution1.frameRateInHz);
 
-            /* Validate first callback against videomode1 from config */
-            UT_ASSERT_EQUAL(callbackResolution1.pixelWidth,    cfg.videomode1.width);
-            UT_ASSERT_EQUAL(callbackResolution1.pixelHeight,   cfg.videomode1.height);
-            UT_ASSERT_EQUAL(callbackResolution1.interlaced,    cfg.videomode1.interlaced);
-            UT_ASSERT_EQUAL(callbackResolution1.frameRateInHz, (float)cfg.videomode1.framerate);
+            /* Iterate over all expected video mode entries from config */
+            for (size_t vmIdx = 0; vmIdx < cfg.videomodes.size(); ++vmIdx)
+            {
+                const auto& expectedMode = cfg.videomodes[vmIdx];
 
-            /* Verify getStatus().detectedResolution matches first callback VideoResolution */
-            PortStatus portStatus1 = {};
-            COMPOSITEINPUT_GET_STATUS(port, portStatus1);
-            UT_ASSERT_TRUE(portStatus1.detectedResolution.has_value());
-            const VideoResolution& statusResolution1 = portStatus1.detectedResolution.value();
-            UT_LOG_INFO("Port[%d] getStatus detectedResolution (1st): pixelWidth=%d, pixelHeight=%d, "
-                        "interlaced=%s, frameRateInHz=%.2f\n",
-                        cfg.portId, statusResolution1.pixelWidth, statusResolution1.pixelHeight,
-                        statusResolution1.interlaced ? "true" : "false",
-                        statusResolution1.frameRateInHz);
-            UT_ASSERT_EQUAL(statusResolution1.pixelWidth,    callbackResolution1.pixelWidth);
-            UT_ASSERT_EQUAL(statusResolution1.pixelHeight,   callbackResolution1.pixelHeight);
-            UT_ASSERT_EQUAL(statusResolution1.interlaced,    callbackResolution1.interlaced);
-            UT_ASSERT_EQUAL(statusResolution1.frameRateInHz, callbackResolution1.frameRateInHz);
+                VideoResolution callbackResolution = {};
+                bool videoModeReceived = controllerListener->getNextVideoModeChange(callbackResolution, timeout);
+                UT_LOG_INFO("Port[%d] onVideoModeChanged[%zu] received: %s\n",
+                            cfg.portId, vmIdx, videoModeReceived ? "true" : "false");
+                UT_ASSERT_TRUE(videoModeReceived);
+                UT_LOG_INFO("Port[%d] VideoResolution[%zu]: pixelWidth=%d, pixelHeight=%d, "
+                            "interlaced=%s, frameRateInHz=%.2f\n",
+                            cfg.portId, vmIdx,
+                            callbackResolution.pixelWidth, callbackResolution.pixelHeight,
+                            callbackResolution.interlaced ? "true" : "false",
+                            callbackResolution.frameRateInHz);
 
-            /* Wait for second onVideoModeChanged (videomode2 after vcomponent switches source) */
-            VideoResolution callbackResolution2 = {};
-            bool videoModeReceived2 = controllerListener->getNextVideoModeChange(callbackResolution2, timeout);
-            UT_LOG_INFO("Port[%d] onVideoModeChanged (2nd) received: %s\n",
-                        cfg.portId, videoModeReceived2 ? "true" : "false");
-            UT_ASSERT_TRUE(videoModeReceived2);
-            UT_LOG_INFO("Port[%d] VideoResolution (2nd): pixelWidth=%d, pixelHeight=%d, "
-                        "interlaced=%s, frameRateInHz=%.2f\n",
-                        cfg.portId, callbackResolution2.pixelWidth, callbackResolution2.pixelHeight,
-                        callbackResolution2.interlaced ? "true" : "false",
-                        callbackResolution2.frameRateInHz);
+                /* Validate callback against videomode[vmIdx] from config */
+                UT_ASSERT_EQUAL(callbackResolution.pixelWidth,    expectedMode.width);
+                UT_ASSERT_EQUAL(callbackResolution.pixelHeight,   expectedMode.height);
+                UT_ASSERT_EQUAL(callbackResolution.interlaced,    expectedMode.interlaced);
+                UT_ASSERT_EQUAL(callbackResolution.frameRateInHz, (float)expectedMode.framerate);
 
-            /* Validate second callback against videomode2 from config */
-            UT_ASSERT_EQUAL(callbackResolution2.pixelWidth,    cfg.videomode2.width);
-            UT_ASSERT_EQUAL(callbackResolution2.pixelHeight,   cfg.videomode2.height);
-            UT_ASSERT_EQUAL(callbackResolution2.interlaced,    cfg.videomode2.interlaced);
-            UT_ASSERT_EQUAL(callbackResolution2.frameRateInHz, (float)cfg.videomode2.framerate);
-
-            /* Verify getStatus().detectedResolution matches second callback VideoResolution */
-            PortStatus portStatus2 = {};
-            COMPOSITEINPUT_GET_STATUS(port, portStatus2);
-            UT_ASSERT_TRUE(portStatus2.detectedResolution.has_value());
-            const VideoResolution& statusResolution2 = portStatus2.detectedResolution.value();
-            UT_LOG_INFO("Port[%d] getStatus detectedResolution (2nd): pixelWidth=%d, pixelHeight=%d, "
-                        "interlaced=%s, frameRateInHz=%.2f\n",
-                        cfg.portId, statusResolution2.pixelWidth, statusResolution2.pixelHeight,
-                        statusResolution2.interlaced ? "true" : "false",
-                        statusResolution2.frameRateInHz);
-            UT_ASSERT_EQUAL(statusResolution2.pixelWidth,    callbackResolution2.pixelWidth);
-            UT_ASSERT_EQUAL(statusResolution2.pixelHeight,   callbackResolution2.pixelHeight);
-            UT_ASSERT_EQUAL(statusResolution2.interlaced,    callbackResolution2.interlaced);
-            UT_ASSERT_EQUAL(statusResolution2.frameRateInHz, callbackResolution2.frameRateInHz);
+                /* Verify getStatus().detectedResolution matches this callback */
+                PortStatus portStatus = {};
+                COMPOSITEINPUT_GET_STATUS(port, portStatus);
+                UT_ASSERT_TRUE(portStatus.detectedResolution.has_value());
+                const VideoResolution& statusResolution = portStatus.detectedResolution.value();
+                UT_LOG_INFO("Port[%d] getStatus detectedResolution[%zu]: pixelWidth=%d, pixelHeight=%d, "
+                            "interlaced=%s, frameRateInHz=%.2f\n",
+                            cfg.portId, vmIdx,
+                            statusResolution.pixelWidth, statusResolution.pixelHeight,
+                            statusResolution.interlaced ? "true" : "false",
+                            statusResolution.frameRateInHz);
+                UT_ASSERT_EQUAL(statusResolution.pixelWidth,    callbackResolution.pixelWidth);
+                UT_ASSERT_EQUAL(statusResolution.pixelHeight,   callbackResolution.pixelHeight);
+                UT_ASSERT_EQUAL(statusResolution.interlaced,    callbackResolution.interlaced);
+                UT_ASSERT_EQUAL(statusResolution.frameRateInHz, callbackResolution.frameRateInHz);
+            }
 
             break;
         }

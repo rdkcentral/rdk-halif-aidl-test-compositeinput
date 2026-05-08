@@ -142,8 +142,17 @@ UT_status_t vts_compositeinput_parse_videoModeTest(
         snprintf(portKey, sizeof(portKey), "%s.ports.%d", keyBase, i);
         cfg.portId        = (int32_t)ut_kvp_getUInt32Field(kvpInstance, (std::string(portKey) + ".id").c_str());
         cfg.maxWaitTimeMs = ut_kvp_getUInt32Field(kvpInstance, (std::string(portKey) + ".max_wait_time_ms").c_str());
-        parseVideoModeEntryFromKVP(kvpInstance, std::string(portKey) + ".videomode1", cfg.videomode1);
-        parseVideoModeEntryFromKVP(kvpInstance, std::string(portKey) + ".videomode2", cfg.videomode2);
+
+        std::string vmListKey = std::string(portKey) + ".videomode";
+        int vmCount = (int)ut_kvp_getListCount(kvpInstance, vmListKey.c_str());
+        for (int v = 0; v < vmCount; ++v) {
+            char vmKey[700];
+            snprintf(vmKey, sizeof(vmKey), "%s.%d", vmListKey.c_str(), v);
+            compositeInputVideoModeEntry_t mode;
+            parseVideoModeEntryFromKVP(kvpInstance, std::string(vmKey), mode);
+            cfg.videomodes.push_back(mode);
+        }
+
         configs.push_back(cfg);
     }
 

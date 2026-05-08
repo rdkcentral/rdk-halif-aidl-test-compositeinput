@@ -29,8 +29,9 @@ compositeinput:
     VideoModeDetection:
       ports:
       - id: 0
-        videomode1: {width: 1920, height: 1080, interlaced: false, framerate: 60}
-        videomode2: {width: 3840, height: 2160, interlaced: false, framerate: 30}
+        videomode: 
+        - {width: 1920, height: 1080, interlaced: false, framerate: 60}
+        - {width: 3840, height: 2160, interlaced: false, framerate: 30}
         max_wait_time_ms: 10000
 
     # TC004: Verify onPropertyChanged fires after setProperty/setPropertyMulti with active source.

@@ -665,12 +665,13 @@ UT_ADD_TEST(VTS_L1_COMPOSITEINPUT, getStatus_pos)
  * **Test Procedure:**@n
  * | Variation / Step | Description | Test Data | Expected Result | Notes |@n
  * | :----: | --------- | ---------- |-------------- | ----- |@n
- * | 01 | Retrieve first portId and get port object | portIds[0] | Non-null ICompositeInputPort | Should Pass |@n
- * | 02 | Verify port state is CLOSED before open | state == State::CLOSED | Assertion passes | Should Pass |@n
- * | 03 | Call open() with a valid ICompositeInputControllerListener | listener = new CompositeInputControllerListener | API returns status OK and non-null ICompositeInputController | Should Pass |@n
- * | 04 | Verify port state is READY after open | state == State::READY | Assertion passes | Should Pass |@n
- * | 05 | Call close() with the controller returned by open | controller from step 03 | API returns status OK and close() returns true | Should Pass |@n
- * | 06 | Verify port state is CLOSED after close | state == State::CLOSED | Assertion passes | Should Pass |@n
+ * | 01 | Retrieve all portIds | input: none | Non-empty portIds list | Should Pass |@n
+ * | 02 | For each portId: get port object | portId = each valid ID | Non-null ICompositeInputPort | Should Pass |@n
+ * | 03 | Verify port state is CLOSED before open | state == State::CLOSED | Assertion passes | Should Pass |@n
+ * | 04 | Call open() with a valid ICompositeInputControllerListener | listener = new CompositeInputControllerListener | API returns status OK and non-null ICompositeInputController | Should Pass |@n
+ * | 05 | Verify port state is READY after open | state == State::READY | Assertion passes | Should Pass |@n
+ * | 06 | Call close() with the controller returned by open | controller from step 04 | API returns status OK and close() returns true | Should Pass |@n
+ * | 07 | Verify port state is CLOSED after close | state == State::CLOSED | Assertion passes | Should Pass |@n
  */
 UT_ADD_TEST(VTS_L1_COMPOSITEINPUT, open_close_pos)
 {
@@ -678,34 +679,37 @@ UT_ADD_TEST(VTS_L1_COMPOSITEINPUT, open_close_pos)
     COMPOSITEINPUT_GET_PORT_IDS(gCOMPOSITEINPUTHandle, portIds);
     UT_ASSERT_TRUE(portIds.size() > 0);
 
-    android::sp<ICompositeInputPort> port;
-    COMPOSITEINPUT_GET_PORT(gCOMPOSITEINPUTHandle, portIds[0], port);
-    UT_ASSERT_NOT_EQUAL(port, nullptr);
+    for (auto portId : portIds)
+    {
+        android::sp<ICompositeInputPort> port;
+        COMPOSITEINPUT_GET_PORT(gCOMPOSITEINPUTHandle, portId, port);
+        UT_ASSERT_NOT_EQUAL(port, nullptr);
 
-    // Verify port starts in CLOSED state
-    State state;
-    COMPOSITEINPUT_GET_STATE(port, state);
-    UT_LOG_INFO("Port[%d] state before open:[%d]\n", portIds[0], static_cast<int>(state));
-    UT_ASSERT_EQUAL(state, State::CLOSED);
+        // Verify port starts in CLOSED state
+        State state;
+        COMPOSITEINPUT_GET_STATE(port, state);
+        UT_LOG_INFO("Port[%d] state before open:[%d]\n", portId, static_cast<int>(state));
+        UT_ASSERT_EQUAL(state, State::CLOSED);
 
-    auto listener = android::sp<CompositeInputControllerListener>::make();
-    android::sp<ICompositeInputController> controller;
-    COMPOSITEINPUT_OPEN(port, listener, controller);
-    UT_ASSERT_NOT_EQUAL(controller, nullptr);
+        auto listener = android::sp<CompositeInputControllerListener>::make();
+        android::sp<ICompositeInputController> controller;
+        COMPOSITEINPUT_OPEN(port, listener, controller);
+        UT_ASSERT_NOT_EQUAL(controller, nullptr);
 
-    // State should be READY after open
-    COMPOSITEINPUT_GET_STATE(port, state);
-    UT_LOG_INFO("Port[%d] state after open:[%d]\n", portIds[0], static_cast<int>(state));
-    UT_ASSERT_EQUAL(state, State::READY);
+        // State should be READY after open
+        COMPOSITEINPUT_GET_STATE(port, state);
+        UT_LOG_INFO("Port[%d] state after open:[%d]\n", portId, static_cast<int>(state));
+        UT_ASSERT_EQUAL(state, State::READY);
 
-    bool closed = false;
-    COMPOSITEINPUT_CLOSE(port, controller, closed);
-    UT_ASSERT_TRUE(closed);
+        bool closed = false;
+        COMPOSITEINPUT_CLOSE(port, controller, closed);
+        UT_ASSERT_TRUE(closed);
 
-    // State should be CLOSED after close
-    COMPOSITEINPUT_GET_STATE(port, state);
-    UT_LOG_INFO("Port[%d] state after close:[%d]\n", portIds[0], static_cast<int>(state));
-    UT_ASSERT_EQUAL(state, State::CLOSED);
+        // State should be CLOSED after close
+        COMPOSITEINPUT_GET_STATE(port, state);
+        UT_LOG_INFO("Port[%d] state after close:[%d]\n", portId, static_cast<int>(state));
+        UT_ASSERT_EQUAL(state, State::CLOSED);
+    }
 }
 
 /**
@@ -886,12 +890,13 @@ UT_ADD_TEST(VTS_L1_COMPOSITEINPUT, unregisterEventListener_neg)
  * **Test Procedure:**@n
  * | Variation / Step | Description | Test Data | Expected Result | Notes |@n
  * | :----: | --------- | ---------- |-------------- | ----- |@n
- * | 01 | Open first port | portIds[0], valid listener | Returns valid controller | Should Pass |@n
- * | 02 | Call start() on the controller | controller from step 01 | API returns status OK | Should Pass |@n
- * | 03 | Verify state is STARTED | state == State::STARTED | Assertion passes | Should Pass |@n
- * | 04 | Call stop() on the controller | controller from step 01 | API returns status OK | Should Pass |@n
- * | 05 | Verify state is READY after stop | state == State::READY | Assertion passes | Should Pass |@n
- * | 06 | Close the port | controller from step 01 | close() returns true | Should Pass |@n
+ * | 01 | Retrieve all portIds | input: none | Non-empty portIds list | Should Pass |@n
+ * | 02 | For each portId: open port with valid listener | portId = each valid ID | Returns valid controller | Should Pass |@n
+ * | 03 | Call start() on the controller | controller from step 02 | API returns status OK | Should Pass |@n
+ * | 04 | Verify state is STARTED | state == State::STARTED | Assertion passes | Should Pass |@n
+ * | 05 | Call stop() on the controller | controller from step 02 | API returns status OK | Should Pass |@n
+ * | 06 | Verify state is READY after stop | state == State::READY | Assertion passes | Should Pass |@n
+ * | 07 | Close the port | controller from step 02 | close() returns true | Should Pass |@n
  */
 UT_ADD_TEST(VTS_L1_COMPOSITEINPUT, controller_start_stop_pos)
 {
@@ -899,31 +904,34 @@ UT_ADD_TEST(VTS_L1_COMPOSITEINPUT, controller_start_stop_pos)
     COMPOSITEINPUT_GET_PORT_IDS(gCOMPOSITEINPUTHandle, portIds);
     UT_ASSERT_TRUE(portIds.size() > 0);
 
-    android::sp<ICompositeInputPort> port;
-    COMPOSITEINPUT_GET_PORT(gCOMPOSITEINPUTHandle, portIds[0], port);
-    UT_ASSERT_NOT_EQUAL(port, nullptr);
+    for (auto portId : portIds)
+    {
+        android::sp<ICompositeInputPort> port;
+        COMPOSITEINPUT_GET_PORT(gCOMPOSITEINPUTHandle, portId, port);
+        UT_ASSERT_NOT_EQUAL(port, nullptr);
 
-    auto listener = android::sp<CompositeInputControllerListener>::make();
-    android::sp<ICompositeInputController> controller;
-    COMPOSITEINPUT_OPEN(port, listener, controller);
-    UT_ASSERT_NOT_EQUAL(controller, nullptr);
+        auto listener = android::sp<CompositeInputControllerListener>::make();
+        android::sp<ICompositeInputController> controller;
+        COMPOSITEINPUT_OPEN(port, listener, controller);
+        UT_ASSERT_NOT_EQUAL(controller, nullptr);
 
-    COMPOSITEINPUT_START(controller);
+        COMPOSITEINPUT_START(controller);
 
-    State state;
-    COMPOSITEINPUT_GET_STATE(port, state);
-    UT_LOG_INFO("Port[%d] state after start:[%d]\n", portIds[0], static_cast<int>(state));
-    UT_ASSERT_EQUAL(state, State::STARTED);
+        State state;
+        COMPOSITEINPUT_GET_STATE(port, state);
+        UT_LOG_INFO("Port[%d] state after start:[%d]\n", portId, static_cast<int>(state));
+        UT_ASSERT_EQUAL(state, State::STARTED);
 
-    COMPOSITEINPUT_STOP(controller);
+        COMPOSITEINPUT_STOP(controller);
 
-    COMPOSITEINPUT_GET_STATE(port, state);
-    UT_LOG_INFO("Port[%d] state after stop:[%d]\n", portIds[0], static_cast<int>(state));
-    UT_ASSERT_EQUAL(state, State::READY);
+        COMPOSITEINPUT_GET_STATE(port, state);
+        UT_LOG_INFO("Port[%d] state after stop:[%d]\n", portId, static_cast<int>(state));
+        UT_ASSERT_EQUAL(state, State::READY);
 
-    bool closed = false;
-    COMPOSITEINPUT_CLOSE(port, controller, closed);
-    UT_ASSERT_TRUE(closed);
+        bool closed = false;
+        COMPOSITEINPUT_CLOSE(port, controller, closed);
+        UT_ASSERT_TRUE(closed);
+    }
 }
 
 /**
