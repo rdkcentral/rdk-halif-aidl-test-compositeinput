@@ -71,5 +71,3 @@ compositeinput:
                     - "ConnectionTestBeforeStart"
                     - "ConnectionTestAfterStart"
                     - "VideoModeDetection"
-                    - "PropertyApplicationVerification"
-                    - "VideoPlaybackVerification"
