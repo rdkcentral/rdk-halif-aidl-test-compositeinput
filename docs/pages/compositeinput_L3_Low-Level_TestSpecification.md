@@ -162,44 +162,6 @@ compositeinput:
         max_wait_time_ms: 10000
 ```
 
-#### PropertyApplicationVerification
-
-##### Objective
-
-To verify that the DUT:
-- Applies composite input property set/get operations with an active source connected.
-- Fires `onPropertyChanged` callback when property values change.
-- Writable properties are discovered from the HFP profile at runtime.
-
-##### Flow
-
-```mermaid
-flowchart TD
-    Start([PropertyApplicationVerification]) --> ParseConfig[Parse Test Configuration]
-    ParseConfig --> OpenPort[open]
-    OpenPort --> StartPort[start]
-    StartPort --> WaitStable[Wait for Signal STABLE]
-    WaitStable --> SetProperty[Set Property Value]
-    SetProperty --> WaitCallback[Wait for onPropertyChanged Callback]
-    WaitCallback --> VerifyProperty[Verify Property Value via getProperty]
-    VerifyProperty --> MoreProps{More Properties?}
-    MoreProps -->|Yes| SetProperty
-    MoreProps -->|No| StopPort[stop]
-    StopPort --> ClosePort[close]
-    ClosePort --> TestPass([Test Passed])
-```
-
-##### Configuration File (YAML)
-
-```yaml
-compositeinput:
-  L3:
-    PropertyApplicationVerification:
-      ports:
-      - id: 0
-        max_wait_time_ms: 5000
-```
-
 #### VideoPlaybackVerification
 
 ##### Objective
@@ -262,11 +224,7 @@ The host validates the same `L3` behaviour categories as `DUT` side `VTS`:
    - Validates `onVideoModeChanged` delivery with the expected `VideoResolution`.
    - Verifies mode update after source switches resolution.
 
-4. **PropertyApplicationVerification**
-   - Triggers `DUT` side `PropertyApplicationVerification`.
-   - Validates `onPropertyChanged` callback delivery after property changes.
-
-5. **VideoPlaybackVerification**
+4. **VideoPlaybackVerification**
    - Triggers `DUT` side `VideoPlaybackVerification`.
    - Verifies signal STABLE and valid `VideoResolution` for active playback readiness.
 

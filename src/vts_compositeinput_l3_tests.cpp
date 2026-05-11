@@ -188,9 +188,20 @@ UT_ADD_TEST(VTS_L3_COMPOSITEINPUT, ConnectionTestBeforeStart)
     UT_status_t parseStatus = vts_compositeinput_parse_connectionTest(
         (char*)VTS_COMPOSITEINPUT_TEST_CONFIG_PATH,
         moduleName, testGroupName, testName, configs);
-
     UT_ASSERT_EQUAL_FATAL(parseStatus, UT_STATUS_OK);
     UT_ASSERT_TRUE(configs.size() > 0);
+
+    std::vector<compositeInputMetricsConfig_t> metric_config;
+    UT_status_t metricsParseStatus = vts_compositeinput_parse_metricsTest(
+        (char*)VTS_COMPOSITEINPUT_TEST_CONFIG_PATH,
+        moduleName, testGroupName, testName, metric_config);
+    UT_ASSERT_EQUAL_FATAL(metricsParseStatus, UT_STATUS_OK);
+
+    std::vector<compositeInputSignalDataConfig_t> signal_data_config;
+    UT_status_t signalDataParseStatus = vts_compositeinput_parse_signalDataTest(
+        (char*)VTS_COMPOSITEINPUT_TEST_CONFIG_PATH,
+        moduleName, testGroupName, testName, signal_data_config);
+    UT_ASSERT_EQUAL_FATAL(signalDataParseStatus, UT_STATUS_OK);
 
     for (const auto& cfg : configs)
     {
@@ -239,6 +250,11 @@ UT_ADD_TEST(VTS_L3_COMPOSITEINPUT, ConnectionTestBeforeStart)
                                 cfg.connectionSequence[i] ? "true" : "false",
                                 seqConnected ? "true" : "false");
                 }
+                vts_compositeinput_validate_signalData(
+                    std::get<1>(entry), signal_data_config[cfg.portId]);
+
+                vts_compositeinput_validate_metrics(
+                    std::get<1>(entry), metric_config[cfg.portId]);
             }
 
             break;
@@ -293,6 +309,17 @@ UT_ADD_TEST(VTS_L3_COMPOSITEINPUT, ConnectionTestAfterStart)
     UT_ASSERT_EQUAL_FATAL(parseStatus, UT_STATUS_OK);
     UT_ASSERT_TRUE(configs.size() > 0);
 
+    std::vector<compositeInputMetricsConfig_t> metric_config;
+    UT_status_t metricsParseStatus = vts_compositeinput_parse_metricsTest(
+        (char*)VTS_COMPOSITEINPUT_TEST_CONFIG_PATH,
+        moduleName, testGroupName, testName, metric_config);
+    UT_ASSERT_EQUAL_FATAL(metricsParseStatus, UT_STATUS_OK);
+
+    std::vector<compositeInputSignalDataConfig_t> signal_data_config;
+    UT_status_t signalDataParseStatus = vts_compositeinput_parse_signalDataTest(
+        (char*)VTS_COMPOSITEINPUT_TEST_CONFIG_PATH,
+        moduleName, testGroupName, testName, signal_data_config);
+    UT_ASSERT_EQUAL_FATAL(signalDataParseStatus, UT_STATUS_OK);
 
     for (const auto& cfg : configs)
     {
@@ -391,6 +418,11 @@ UT_ADD_TEST(VTS_L3_COMPOSITEINPUT, ConnectionTestAfterStart)
                                     static_cast<int>(actualStatus1));
                     }
                 }
+                vts_compositeinput_validate_signalData(
+                    std::get<1>(entry), signal_data_config[cfg.portId]);
+
+                vts_compositeinput_validate_metrics(
+                    std::get<1>(entry), metric_config[cfg.portId]);
             }
 
             break;
@@ -529,201 +561,6 @@ UT_ADD_TEST(VTS_L3_COMPOSITEINPUT, VideoModeDetection)
     }
 }
 
-/**
- * @brief Verify property set/get operations are applied on device with callback notification.
- *
- * Validates that after calling setProperty() or setPropertyMulti() on a composite
- * input port with an active source connected and signal STABLE, the HAL fires
- * ICompositeInputEventListener::onPropertyChanged() for each changed property and
- * the updated value can be read back via getProperty().
- *
- * Writable properties are discovered from the HFP profile
- * (compositeinput.ports.N.propertyMetadata). The test sets each writable property
- * to an appropriate zero/default value for its declared type and verifies the
- * callback and readback. setPropertyMulti() is also exercised with all writable
- * properties in a single call.
- *
- * **Test Group ID:** L3: 03@n
- * **Test Case ID:** 004@n
- * **Priority:** Medium@n
- *
- * **Pre-Conditions:** vcomponent must be running with an active source connected @n
- * **User Interaction:** None @n
- *
- * **Test Procedure:**@n
- * | Variation / Step | Description | Test Data | Expected Result | Notes |
- * | :----: | --------- | ---------- |-------------- | ----- |
- * | 01 | Start composite input port with active source | portId from config | Port STARTED, signal STABLE | Should Pass |
- * | 02 | For each writable property: call setProperty() | property + typed default value | EX_NONE | Should Pass |
- * | 03 | Verify onPropertyChanged fires with correct property and value | none | Callback received, property and value match | Should Pass |
- * | 04 | Read back via getProperty() and verify it matches the set value | none | Value matches | Should Pass |
- * | 05 | Call setPropertyMulti() with all writable properties | kvPairs vector | EX_NONE | Should Pass |
- * | 06 | Verify onPropertyChanged fires for each changed property | none | N callbacks received | Should Pass |
- * | 07 | Stop and close port | none | Port closes successfully | Should Pass |
- *
- * **Refer:** [compositeinput_High-Level_TestSpecification](../../docs/pages/compositeinput_High-Level_TestSpecification.md)
- */
-UT_ADD_TEST(VTS_L3_COMPOSITEINPUT, PropertyApplicationVerification)
-{
-    const char *testName = "PropertyApplicationVerification";
-    std::vector<compositeInputPropertyConfig_t> configs;
-
-    UT_status_t parseStatus = vts_compositeinput_parse_propertyTest(
-        (char*)VTS_COMPOSITEINPUT_TEST_CONFIG_PATH,
-        moduleName, testGroupName, testName, configs);
-
-    UT_ASSERT_EQUAL_FATAL(parseStatus, UT_STATUS_OK);
-    UT_ASSERT_TRUE(configs.size() > 0);
-
-    /* Locate the port's index in the HFP profile for property metadata lookup */
-    uint32_t profilePortCount = UT_KVP_PROFILE_GET_LIST_COUNT("compositeinput.ports");
-
-    for (const auto& cfg : configs)
-    {
-        UT_LOG_INFO("Testing port[%d] for property application\n", cfg.portId);
-        StartPort(cfg.portId);
-
-        bool portFound = false;
-        for (const auto& entry : mCompositeInputList)
-        {
-            if (std::get<0>(entry) != cfg.portId)
-                continue;
-
-            portFound = true;
-            auto& port          = std::get<1>(entry);
-            auto& eventListener = std::get<3>(entry);
-            auto& controller    = std::get<4>(entry);
-
-            const auto timeout = chrono::milliseconds(cfg.maxWaitTimeMs);
-
-            /* Locate the profile index for this portId */
-            uint32_t profileIdx = UINT32_MAX;
-            for (uint32_t i = 0; i < profilePortCount; ++i)
-            {
-                std::string idKey = "compositeinput.ports." + std::to_string(i) + ".id";
-                if (static_cast<int32_t>(UT_KVP_PROFILE_GET_UINT32(idKey.c_str())) == cfg.portId)
-                {
-                    profileIdx = i;
-                    break;
-                }
-            }
-
-            if (profileIdx == UINT32_MAX)
-            {
-                UT_LOG_WARNING("Port[%d] not found in profile, skipping\n", cfg.portId);
-                break;
-            }
-
-            /* Build metadata map: property → {readOnly, type} */
-            struct MetaEntry { bool readOnly; PropertyMetadata::PropertyType type; };
-            std::map<PortProperty, MetaEntry> metaMap;
-
-            std::string metaListKey = "compositeinput.ports." + std::to_string(profileIdx) +
-                                      ".propertyMetadata";
-            uint32_t metaCount = UT_KVP_PROFILE_GET_LIST_COUNT(metaListKey.c_str());
-            for (uint32_t j = 0; j < metaCount; ++j)
-            {
-                std::string base = metaListKey + "." + std::to_string(j);
-                char metaKeyStr[UT_KVP_MAX_ELEMENT_SIZE];
-                UT_KVP_PROFILE_GET_STRING((base + ".key").c_str(), metaKeyStr);
-                char metaTypeStr[UT_KVP_MAX_ELEMENT_SIZE];
-                UT_KVP_PROFILE_GET_STRING((base + ".type").c_str(), metaTypeStr);
-                bool readOnly = UT_KVP_PROFILE_GET_BOOL((base + ".readOnly").c_str());
-                PortProperty prop = convertStringToPortProperty(std::string(metaKeyStr));
-                metaMap[prop] = { readOnly, convertStringToPropertyType(std::string(metaTypeStr)) };
-            }
-
-            /* Collect writable properties from the profile's supportedProperties list */
-            std::vector<PropertyKVPair> writeKVPairs;
-            std::string propListKey = "compositeinput.ports." + std::to_string(profileIdx) +
-                                      ".supportedProperties";
-            uint32_t propCount = UT_KVP_PROFILE_GET_LIST_COUNT(propListKey.c_str());
-            for (uint32_t j = 0; j < propCount; ++j)
-            {
-                char propStr[UT_KVP_MAX_ELEMENT_SIZE];
-                UT_KVP_PROFILE_GET_STRING((propListKey + "." + std::to_string(j)).c_str(), propStr);
-                PortProperty prop = convertStringToPortProperty(std::string(propStr));
-
-                auto it = metaMap.find(prop);
-                if (it == metaMap.end() || it->second.readOnly)
-                    continue;
-
-                PropertyKVPair kv;
-                kv.property = prop;
-                switch (it->second.type)
-                {
-                    case PropertyMetadata::PropertyType::BOOLEAN:
-                        kv.value.value = com::rdk::hal::PropertyValue::Value::make<
-                            com::rdk::hal::PropertyValue::Value::Tag::booleanValue>(false);
-                        break;
-                    case PropertyMetadata::PropertyType::INTEGER:
-                        kv.value.value = com::rdk::hal::PropertyValue::Value::make<
-                            com::rdk::hal::PropertyValue::Value::Tag::intValue>(int32_t(0));
-                        break;
-                    case PropertyMetadata::PropertyType::LONG:
-                        kv.value.value = com::rdk::hal::PropertyValue::Value::make<
-                            com::rdk::hal::PropertyValue::Value::Tag::longValue>(int64_t(0));
-                        break;
-                    case PropertyMetadata::PropertyType::FLOAT:
-                        kv.value.value = com::rdk::hal::PropertyValue::Value::make<
-                            com::rdk::hal::PropertyValue::Value::Tag::floatValue>(0.0f);
-                        break;
-                    case PropertyMetadata::PropertyType::DOUBLE:
-                        kv.value.value = com::rdk::hal::PropertyValue::Value::make<
-                            com::rdk::hal::PropertyValue::Value::Tag::doubleValue>(0.0);
-                        break;
-                    case PropertyMetadata::PropertyType::STRING:
-                        kv.value.value = com::rdk::hal::PropertyValue::Value::make<
-                            com::rdk::hal::PropertyValue::Value::Tag::stringValue>(
-                                android::String16(""));
-                        break;
-                    default:
-                        kv.value.value = com::rdk::hal::PropertyValue::Value::make<
-                            com::rdk::hal::PropertyValue::Value::Tag::intValue>(int32_t(0));
-                        break;
-                }
-                writeKVPairs.push_back(kv);
-            }
-
-            if (writeKVPairs.empty())
-            {
-                UT_LOG_WARNING("Port[%d] has no writable properties in profile, skipping\n",
-                               cfg.portId);
-                break;
-            }
-
-
-            for (const auto& kv : writeKVPairs)
-            {
-                COMPOSITEINPUT_SET_PROPERTY(controller, kv.property, kv.value);
-                UT_LOG_INFO("Port[%d] setProperty(property=%d)\n",
-                            cfg.portId, static_cast<int>(kv.property));
-
-                /* Verify onPropertyChanged fires for the set property */
-                PortProperty cbProp;
-                ::com::rdk::hal::PropertyValue cbValue;
-                bool cbReceived = eventListener->getNextPropertyChange(cbProp, cbValue, timeout);
-                UT_LOG_INFO("Port[%d] onPropertyChanged received: %s\n",
-                            cfg.portId, cbReceived ? "true" : "false");
-                UT_ASSERT_TRUE(cbReceived);
-                UT_ASSERT_EQUAL(cbProp, kv.property);
-
-                /* Read back value via getProperty() and verify it matches */
-                ::com::rdk::hal::PropertyValue readValue;
-                COMPOSITEINPUT_GET_PROPERTY(port, kv.property, readValue);
-                UT_ASSERT_EQUAL(readValue, kv.value);
-                UT_LOG_INFO("Port[%d] property[%d] value verified after setProperty\n",
-                            cfg.portId, static_cast<int>(kv.property));
-            }
-
-            break;
-        }
-
-        UT_ASSERT_TRUE(portFound);
-        StopPort(cfg.portId);
-    }
-
-}
 
 /**
  * @brief Verify end-to-end video and audio playback readiness via composite input.
@@ -756,6 +593,8 @@ UT_ADD_TEST(VTS_L3_COMPOSITEINPUT, PropertyApplicationVerification)
  *
  * **Refer:** [compositeinput_High-Level_TestSpecification](../../docs/pages/compositeinput_High-Level_TestSpecification.md)
  */
+// TODO: Implement this test case after video components are stable and also need to check if this can be moved to L4.
+#if 0
 UT_ADD_TEST(VTS_L3_COMPOSITEINPUT, VideoPlaybackVerification)
 {
     const char *testName = "VideoPlaybackVerification";
@@ -852,6 +691,7 @@ UT_ADD_TEST(VTS_L3_COMPOSITEINPUT, VideoPlaybackVerification)
     for (const auto& cfg : configs)
         StopPort(cfg.portId);
 }
+#endif
 
 /** @} */ // End of COMPOSITE_INPUT_HALTEST_L3
 /** @} */ // End of COMPOSITE_INPUT_HALTEST

@@ -12,6 +12,14 @@ compositeinput:
         connection_sequence: [false, true, false, true]
         expect_signal_after_connect: false
         max_wait_time_ms: 10000
+        property:
+            signal_data:
+                signal_strength: 0
+                signal_quality: 0
+            metrics:
+                 METRIC_SIGNAL_LOCK_TIME: 0
+                 METRIC_SIGNAL_DROPS: 0
+                 METRIC_SIGNAL_LOCK_COUNT: 0
 
     # TC002: Verify onSignalStatusChanged fires during STARTING and on signal events in STARTED state.
     # connection_state: true means device is connected (expect STABLE initial signal)
@@ -20,9 +28,17 @@ compositeinput:
       ports:
       - id: 0
         connection_state: true
-        connection_sequence: [false, true]
+        connection_sequence: [false, true, false, true]
         expect_signal_after_connect: true
         max_wait_time_ms: 10000
+        property:
+            signal_data:
+                signal_strength: -20
+                signal_quality: 85
+            metrics:
+                 METRIC_SIGNAL_LOCK_TIME: 0
+                 METRIC_SIGNAL_DROPS: 0
+                 METRIC_SIGNAL_LOCK_COUNT: 0
 
     # TC003: Verify onVideoModeChanged fires with correct VideoResolution after signal STABLE.
     # Requires an active source connected (vcomponent or physical device).

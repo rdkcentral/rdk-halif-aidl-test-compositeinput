@@ -36,6 +36,9 @@
 
 #include "com/rdk/hal/compositeinput/SignalStatus.h"
 #include "com/rdk/hal/compositeinput/PortProperty.h"
+#include "com/rdk/hal/compositeinput/ICompositeInputPort.h"
+#include <com/rdk/hal/PropertyValue.h>
+#include <utils/StrongPointer.h>
 
 using namespace std;
 using namespace com::rdk::hal::compositeinput;
@@ -86,6 +89,31 @@ typedef struct compositeInputPropertyConfig
     uint32_t maxWaitTimeMs;
 } compositeInputPropertyConfig_t;
 
+/**
+ * Expected SIGNAL_STRENGTH (dBm, LONG) and SIGNAL_QUALITY (0..100, INTEGER)
+ * read via getProperty() and validated against a single expected value per port.
+ */
+typedef struct compositeInputSignalDataConfig
+{
+    int32_t portId;
+    int64_t signalStrength;  /**< expected SIGNAL_STRENGTH in dBm */
+    int32_t signalQuality;   /**< expected SIGNAL_QUALITY (0..100) */
+    uint32_t maxWaitTimeMs;
+} compositeInputSignalDataConfig_t;
+
+/**
+ * Expected baseline metric values read via getProperty() for METRIC_* keys.
+ * Validated after port open (before start) or after resetMetrics().
+ */
+typedef struct compositeInputMetricsConfig
+{
+    int32_t portId;
+    int64_t metricSignalLockTime;   /**< expected METRIC_SIGNAL_LOCK_TIME */
+    int64_t metricSignalDrops;      /**< expected METRIC_SIGNAL_DROPS */
+    int64_t metricSignalLockCount;  /**< expected METRIC_SIGNAL_LOCK_COUNT */
+    uint32_t maxWaitTimeMs;
+} compositeInputMetricsConfig_t;
+
 UT_status_t vts_compositeinput_parse_connectionTest(
     char *configurationFile, const char *module, const char *testGroup,
     const char *testName, std::vector<compositeInputConnectionConfig_t>& configs);
@@ -101,5 +129,37 @@ UT_status_t vts_compositeinput_parse_videoModeTest(
 UT_status_t vts_compositeinput_parse_propertyTest(
     char *configurationFile, const char *module, const char *testGroup,
     const char *testName, std::vector<compositeInputPropertyConfig_t>& configs);
+
+UT_status_t vts_compositeinput_parse_signalDataTest(
+    char *configurationFile, const char *module, const char *testGroup,
+    const char *testName, std::vector<compositeInputSignalDataConfig_t>& configs);
+
+UT_status_t vts_compositeinput_parse_metricsTest(
+    char *configurationFile, const char *module, const char *testGroup,
+    const char *testName, std::vector<compositeInputMetricsConfig_t>& configs);
+
+/**
+ * @brief Validate SIGNAL_STRENGTH and SIGNAL_QUALITY via getProperty().
+ *
+ * Calls getProperty(SIGNAL_STRENGTH) and getProperty(SIGNAL_QUALITY) on the port
+ * and asserts the returned values match cfg.signalStrength and cfg.signalQuality.
+ *
+ * @param port   The open composite input port to query.
+ * @param cfg    Parsed signal data config containing expected values.
+ */
+void vts_compositeinput_validate_signalData(
+    const android::sp<::com::rdk::hal::compositeinput::ICompositeInputPort>& port,
+    const compositeInputSignalDataConfig_t& cfg);
+
+/**
+ * @brief Validate METRIC_SIGNAL_LOCK_TIME, METRIC_SIGNAL_DROPS, and METRIC_SIGNAL_LOCK_COUNT
+ *        via getProperty() against the expected baseline values in cfg.
+ *
+ * @param port   The open composite input port to query.
+ * @param cfg    Parsed metrics config containing expected baseline values.
+ */
+void vts_compositeinput_validate_metrics(
+    const android::sp<::com::rdk::hal::compositeinput::ICompositeInputPort>& port,
+    const compositeInputMetricsConfig_t& cfg);
 
 #endif // __VTS_COMPOSITEINPUT_PARSE_TESTCONFIG_H__

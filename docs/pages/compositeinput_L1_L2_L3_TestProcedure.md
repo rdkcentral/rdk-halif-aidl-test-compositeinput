@@ -237,11 +237,7 @@ Host-side implementation is in `host/tests` and covers:
    - Verifies that `onVideoModeChanged` fires with the expected `VideoResolution`.
    - Validates mode updates when the source switches resolution.
 
-4. **PropertyApplicationVerification**
-   - Triggers DUT-side property set/get with an active source connected.
-   - Verifies that `onPropertyChanged` callback fires after property changes.
-
-5. **VideoPlaybackVerification**
+4. **VideoPlaybackVerification**
    - Verifies end-to-end video playback readiness (signal STABLE, valid `VideoResolution`).
    - Requires an active composite source connected to the DUT.
 
