@@ -1,0 +1,61 @@
+compositeinput:
+  L3:
+    # ── L3 test cases (vts_compositeinput_l3_tests.cpp) ──────────────────────
+
+    # TC001: Verify onConnectionChanged fires during OPENING and on HPD events in READY state.
+    # connection_state: initial cable presence before open()
+    # connection_sequence: HPD plug/unplug / powerON/powerOFF events
+    ConnectionTestBeforeStart:
+      ports:
+      - id: 0
+        connection_state: true
+        connection_sequence: [false, true, false, true]
+        expect_signal_after_connect: false
+        max_wait_time_ms: 10000
+        property:
+            signal_data:
+                signal_strength: 0
+                signal_quality: 0
+            metrics:
+                 METRIC_SIGNAL_LOCK_TIME: 0
+                 METRIC_SIGNAL_DROPS: 0
+                 METRIC_SIGNAL_LOCK_COUNT: 0
+
+    # TC002: Verify onSignalStatusChanged fires during STARTING and on signal events in STARTED state.
+    # connection_state: true means device is connected (expect STABLE initial signal)
+    # connection_sequence: number of signal events to wait for after STARTED
+    ConnectionTestAfterStart:
+      ports:
+      - id: 0
+        connection_state: true
+        connection_sequence: [false, true, false, true]
+        expect_signal_after_connect: true
+        max_wait_time_ms: 10000
+        property:
+            signal_data:
+                signal_strength: -20
+                signal_quality: 85
+            metrics:
+                 METRIC_SIGNAL_LOCK_TIME: 0
+                 METRIC_SIGNAL_DROPS: 0
+                 METRIC_SIGNAL_LOCK_COUNT: 0
+
+    # TC003: Verify onVideoModeChanged fires with correct VideoResolution after signal STABLE.
+    # Requires an active source connected (physical device).
+    VideoModeDetection:
+      ports:
+      - id: 0
+        videomode: 
+        - {width: 1920, height: 1080, interlaced: false, framerate: 60}
+        - {width: 3840, height: 2160, interlaced: false, framerate: 30}
+        max_wait_time_ms: 10000
+
+    # TC005: Verify end-to-end video playback readiness (signal STABLE, valid VideoResolution).
+    # connection_state: true — active source must be connected
+    VideoPlaybackVerification:
+      ports:
+      - id: 0
+        connection_state: true
+        connection_sequence: []
+        expect_signal_after_connect: true
+        max_wait_time_ms: 15000
