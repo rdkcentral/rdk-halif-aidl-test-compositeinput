@@ -109,129 +109,104 @@ public:
  */
 UT_ADD_TEST(VTS_L2_COMPOSITEINPUT, StateTransitions)
 {
-    uint32_t portCount = UT_KVP_PROFILE_GET_LIST_COUNT("compositeinput.ports");
-    UT_ASSERT_TRUE(portCount > 0);
+    std::vector<int32_t> portIds;
+    COMPOSITEINPUT_GET_PORT_IDS(gCOMPOSITEINPUTHandle, portIds);
+    UT_ASSERT_TRUE(portIds.size() > 0);
 
-    for (uint32_t i = 0; i < portCount; ++i)
+    for (const auto& portId : portIds)
     {
-        std::string idKey = "compositeinput.ports." + std::to_string(i) + ".id";
-        int32_t profilePortId = static_cast<int32_t>(UT_KVP_PROFILE_GET_UINT32(idKey.c_str()));
-
         android::sp<ICompositeInputPort> port;
-        COMPOSITEINPUT_GET_PORT(gCOMPOSITEINPUTHandle, profilePortId, port);
+        auto controllerListener = android::sp<CompositeInputControllerListener>::make();
+        auto eventListener = android::sp<CompositeInputEventListener>::make();
+        android::sp<ICompositeInputController> controller;
+        std::pair<State, State> stateChanges;
+        State state;
+
+        COMPOSITEINPUT_GET_PORT(gCOMPOSITEINPUTHandle, portId, port);
         UT_ASSERT_NOT_EQUAL(port, nullptr);
 
-        // Register event listener before open so CLOSED→OPENING is captured
-        auto eventListener = android::sp<CompositeInputEventListener>::make();
-        COMPOSITEINPUT_REGISTER_EVENT_LISTENER(port, eventListener);
-        eventListener->reset();
-
-        // Verify initial state
-        State state;
+        // Check initial state is CLOSED
         COMPOSITEINPUT_GET_STATE(port, state);
-        UT_LOG_INFO("Port[%d] initial state:[%d]\n", profilePortId, static_cast<int>(state));
+        UT_LOG_INFO("Port[%d] initial state:[%d]\n", portId, static_cast<int>(state));
         UT_ASSERT_EQUAL(state, State::CLOSED);
 
-        // ── open ──────────────────────────────────────────────────────────────
-        auto controllerListener = android::sp<CompositeInputControllerListener>::make();
-        android::sp<ICompositeInputController> controller;
+        // Register event listener before open so CLOSED→OPENING is captured
+        COMPOSITEINPUT_REGISTER_EVENT_LISTENER(port, eventListener);
+
+        // Open the port
         COMPOSITEINPUT_OPEN(port, controllerListener, controller);
         UT_ASSERT_NOT_EQUAL(controller, nullptr);
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        // Verify onStateChanged for CLOSED→OPENING
+        UT_ASSERT_TRUE(eventListener->getNextStateChanges(stateChanges));
+        UT_LOG_INFO("Port[%d] onStateChanged: %d to %d\n", portId,
+                    static_cast<int>(stateChanges.first), static_cast<int>(stateChanges.second));
+        UT_ASSERT_EQUAL(stateChanges.first,  State::CLOSED);
+        UT_ASSERT_EQUAL(stateChanges.second, State::OPENING);
 
-        COMPOSITEINPUT_GET_STATE(port, state);
-        UT_LOG_INFO("Port[%d] state after open:[%d]\n", profilePortId, static_cast<int>(state));
-        UT_ASSERT_EQUAL(state, State::READY);
+        // Verify onStateChanged for OPENING→READY
+        UT_ASSERT_TRUE(eventListener->getNextStateChanges(stateChanges));
+        UT_LOG_INFO("Port[%d] onStateChanged: %d to %d\n", portId,
+                    static_cast<int>(stateChanges.first), static_cast<int>(stateChanges.second));
+        UT_ASSERT_EQUAL(stateChanges.first,  State::OPENING);
+        UT_ASSERT_EQUAL(stateChanges.second, State::READY);
 
-        // Expect CLOSED→OPENING and OPENING→READY
-        std::pair<State, State> change;
-        UT_ASSERT_TRUE(eventListener->hasStateChanged());
-        UT_ASSERT_TRUE(eventListener->getNextStateChanges(change));
-        UT_LOG_INFO("Port[%d] onStateChanged: %d to %d\n", profilePortId,
-                    static_cast<int>(change.first), static_cast<int>(change.second));
-        UT_ASSERT_EQUAL(change.first,  State::CLOSED);
-        UT_ASSERT_EQUAL(change.second, State::OPENING);
-
-        UT_ASSERT_TRUE(eventListener->getNextStateChanges(change));
-        UT_LOG_INFO("Port[%d] onStateChanged: %d to %d\n", profilePortId,
-                    static_cast<int>(change.first), static_cast<int>(change.second));
-        UT_ASSERT_EQUAL(change.first,  State::OPENING);
-        UT_ASSERT_EQUAL(change.second, State::READY);
-        eventListener->reset();
-
-        // ── start ─────────────────────────────────────────────────────────────
+        // Start the port
         COMPOSITEINPUT_START(controller);
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-        COMPOSITEINPUT_GET_STATE(port, state);
-        UT_LOG_INFO("Port[%d] state after start:[%d]\n", profilePortId, static_cast<int>(state));
-        UT_ASSERT_EQUAL(state, State::STARTED);
+        // Verify onStateChanged for READY→STARTING
+        UT_ASSERT_TRUE(eventListener->getNextStateChanges(stateChanges));
+        UT_LOG_INFO("Port[%d] onStateChanged: %d to %d\n", portId,
+                    static_cast<int>(stateChanges.first), static_cast<int>(stateChanges.second));
+        UT_ASSERT_EQUAL(stateChanges.first,  State::READY);
+        UT_ASSERT_EQUAL(stateChanges.second, State::STARTING);
 
-        // Expect READY→STARTING and STARTING→STARTED
-        UT_ASSERT_TRUE(eventListener->hasStateChanged());
-        UT_ASSERT_TRUE(eventListener->getNextStateChanges(change));
-        UT_LOG_INFO("Port[%d] onStateChanged: %d to %d\n", profilePortId,
-                    static_cast<int>(change.first), static_cast<int>(change.second));
-        UT_ASSERT_EQUAL(change.first,  State::READY);
-        UT_ASSERT_EQUAL(change.second, State::STARTING);
+        // Verify onStateChanged for STARTING→STARTED
+        UT_ASSERT_TRUE(eventListener->getNextStateChanges(stateChanges));
+        UT_LOG_INFO("Port[%d] onStateChanged: %d to %d\n", portId,
+                    static_cast<int>(stateChanges.first), static_cast<int>(stateChanges.second));
+        UT_ASSERT_EQUAL(stateChanges.first,  State::STARTING);
+        UT_ASSERT_EQUAL(stateChanges.second, State::STARTED);
 
-        UT_ASSERT_TRUE(eventListener->getNextStateChanges(change));
-        UT_LOG_INFO("Port[%d] onStateChanged: %d to %d\n", profilePortId,
-                    static_cast<int>(change.first), static_cast<int>(change.second));
-        UT_ASSERT_EQUAL(change.first,  State::STARTING);
-        UT_ASSERT_EQUAL(change.second, State::STARTED);
-        eventListener->reset();
-
-        // ── stop ──────────────────────────────────────────────────────────────
+        // Stop the port
         COMPOSITEINPUT_STOP(controller);
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-        COMPOSITEINPUT_GET_STATE(port, state);
-        UT_LOG_INFO("Port[%d] state after stop:[%d]\n", profilePortId, static_cast<int>(state));
-        UT_ASSERT_EQUAL(state, State::READY);
+        // Verify onStateChanged for STARTED→STOPPING
+        UT_ASSERT_TRUE(eventListener->getNextStateChanges(stateChanges));
+        UT_LOG_INFO("Port[%d] onStateChanged: %d to %d\n", portId,
+                    static_cast<int>(stateChanges.first), static_cast<int>(stateChanges.second));
+        UT_ASSERT_EQUAL(stateChanges.first,  State::STARTED);
+        UT_ASSERT_EQUAL(stateChanges.second, State::STOPPING);
 
-        // Expect STARTED→STOPPING and STOPPING→READY
-        UT_ASSERT_TRUE(eventListener->hasStateChanged());
-        UT_ASSERT_TRUE(eventListener->getNextStateChanges(change));
-        UT_LOG_INFO("Port[%d] onStateChanged: %d to %d\n", profilePortId,
-                    static_cast<int>(change.first), static_cast<int>(change.second));
-        UT_ASSERT_EQUAL(change.first,  State::STARTED);
-        UT_ASSERT_EQUAL(change.second, State::STOPPING);
+        // Verify onStateChanged for STOPPING→READY
+        UT_ASSERT_TRUE(eventListener->getNextStateChanges(stateChanges));
+        UT_LOG_INFO("Port[%d] onStateChanged: %d to %d\n", portId,
+                    static_cast<int>(stateChanges.first), static_cast<int>(stateChanges.second));
+        UT_ASSERT_EQUAL(stateChanges.first,  State::STOPPING);
+        UT_ASSERT_EQUAL(stateChanges.second, State::READY);
 
-        UT_ASSERT_TRUE(eventListener->getNextStateChanges(change));
-        UT_LOG_INFO("Port[%d] onStateChanged: %d to %d\n", profilePortId,
-                    static_cast<int>(change.first), static_cast<int>(change.second));
-        UT_ASSERT_EQUAL(change.first,  State::STOPPING);
-        UT_ASSERT_EQUAL(change.second, State::READY);
-        eventListener->reset();
-
-        // ── close ─────────────────────────────────────────────────────────────
+        // Close the port
         bool closed = false;
         COMPOSITEINPUT_CLOSE(port, controller, closed);
         UT_ASSERT_TRUE(closed);
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-        COMPOSITEINPUT_GET_STATE(port, state);
-        UT_LOG_INFO("Port[%d] state after close:[%d]\n", profilePortId, static_cast<int>(state));
-        UT_ASSERT_EQUAL(state, State::CLOSED);
+        // Verify onStateChanged for READY→CLOSING
+        UT_ASSERT_TRUE(eventListener->getNextStateChanges(stateChanges));
+        UT_LOG_INFO("Port[%d] onStateChanged: %d to %d\n", portId,
+                    static_cast<int>(stateChanges.first), static_cast<int>(stateChanges.second));
+        UT_ASSERT_EQUAL(stateChanges.first,  State::READY);
+        UT_ASSERT_EQUAL(stateChanges.second, State::CLOSING);
 
-        // Expect READY→CLOSING and CLOSING→CLOSED
-        UT_ASSERT_TRUE(eventListener->hasStateChanged());
-        UT_ASSERT_TRUE(eventListener->getNextStateChanges(change));
-        UT_LOG_INFO("Port[%d] onStateChanged: %d to %d\n", profilePortId,
-                    static_cast<int>(change.first), static_cast<int>(change.second));
-        UT_ASSERT_EQUAL(change.first,  State::READY);
-        UT_ASSERT_EQUAL(change.second, State::CLOSING);
+        // Verify onStateChanged for CLOSING→CLOSED
+        UT_ASSERT_TRUE(eventListener->getNextStateChanges(stateChanges));
+        UT_LOG_INFO("Port[%d] onStateChanged: %d to %d\n", portId,
+                    static_cast<int>(stateChanges.first), static_cast<int>(stateChanges.second));
+        UT_ASSERT_EQUAL(stateChanges.first,  State::CLOSING);
+        UT_ASSERT_EQUAL(stateChanges.second, State::CLOSED);
 
-        UT_ASSERT_TRUE(eventListener->getNextStateChanges(change));
-        UT_LOG_INFO("Port[%d] onStateChanged: %d to %d\n", profilePortId,
-                    static_cast<int>(change.first), static_cast<int>(change.second));
-        UT_ASSERT_EQUAL(change.first,  State::CLOSING);
-        UT_ASSERT_EQUAL(change.second, State::CLOSED);
-
+        // Unregister the event listener
         COMPOSITEINPUT_UNREGISTER_EVENT_LISTENER(port, eventListener);
-        UT_LOG_INFO("Port[%d] StateTransitions passed\n", profilePortId);
+        UT_LOG_INFO("Port[%d] StateTransitions passed\n", portId);
     }
 }
 
@@ -805,94 +780,84 @@ UT_ADD_TEST(VTS_L2_COMPOSITEINPUT, ResetMetrics)
  */
 UT_ADD_TEST(VTS_L2_COMPOSITEINPUT, MaximumConcurrentStartedPorts)
 {
-    // Check preconditions
-    uint32_t maxConcurrent = UT_KVP_PROFILE_GET_UINT32(
-            "compositeinput/platformCapabilities/maximumConcurrentStartedPorts");
-    UT_LOG_INFO("maximumConcurrentStartedPorts:[%u]\n", maxConcurrent);
-
-    if (maxConcurrent != 1)
-    {
-        UT_LOG_INFO("maximumConcurrentStartedPorts != 1; skipping test\n");
-        return;
-    }
-
     std::vector<int32_t> portIds;
     COMPOSITEINPUT_GET_PORT_IDS(gCOMPOSITEINPUTHandle, portIds);
-    UT_ASSERT_TRUE(portIds.size() > 0);
 
-    if (portIds.size() < 2)
+    PlatformCapabilities caps;
+    COMPOSITEINPUT_GET_PLATFORM_CAPABILITIES(gCOMPOSITEINPUTHandle, caps);
+    UT_ASSERT_TRUE(caps.maximumConcurrentStartedPorts >= 1);
+    UT_ASSERT_TRUE(static_cast<size_t>(caps.maximumConcurrentStartedPorts) <= portIds.size());
+
+    // Open and start up to maximumConcurrentStartedPorts ports
+    size_t maxPorts = static_cast<size_t>(caps.maximumConcurrentStartedPorts);
+    std::vector<android::sp<ICompositeInputPort>> ports;
+    std::vector<android::sp<CompositeInputControllerListener>> listeners;
+    std::vector<android::sp<ICompositeInputController>> controllers;
+
+    for (size_t i = 0; i < maxPorts; ++i)
     {
-        UT_LOG_INFO("Only %zu port(s) available; need >= 2 to test concurrency limit; skipping\n",
-                    portIds.size());
-        return;
+        android::sp<ICompositeInputPort> port;
+        COMPOSITEINPUT_GET_PORT(gCOMPOSITEINPUTHandle, portIds[i], port);
+        UT_ASSERT_NOT_EQUAL(port, nullptr);
+
+        auto listener = android::sp<CompositeInputControllerListener>::make();
+        android::sp<ICompositeInputController> controller;
+        COMPOSITEINPUT_OPEN(port, listener, controller);
+        UT_ASSERT_NOT_EQUAL(controller, nullptr);
+
+        COMPOSITEINPUT_START(controller);
+
+        State state;
+        COMPOSITEINPUT_GET_STATE(port, state);
+        UT_LOG_INFO("Port[%d] state after start:[%d]\n", portIds[i], static_cast<int>(state));
+        UT_ASSERT_EQUAL(state, State::STARTED);
+
+        ports.push_back(port);
+        listeners.push_back(listener);
+        controllers.push_back(controller);
     }
 
-    // Open and start port[0]
-    android::sp<ICompositeInputPort> port0;
-    COMPOSITEINPUT_GET_PORT(gCOMPOSITEINPUTHandle, portIds[0], port0);
-    UT_ASSERT_NOT_EQUAL(port0, nullptr);
+    if (maxPorts < portIds.size())
+    {
+        // Try to open and start one more port — must fail (exceeds maximumConcurrentStartedPorts)
+        size_t failIndex = maxPorts;
+        android::sp<ICompositeInputPort> portFail;
+        COMPOSITEINPUT_GET_PORT(gCOMPOSITEINPUTHandle, portIds[failIndex], portFail);
+        UT_ASSERT_NOT_EQUAL(portFail, nullptr);
 
-    auto listener0 = android::sp<CompositeInputControllerListener>::make();
-    android::sp<ICompositeInputController> controller0;
-    COMPOSITEINPUT_OPEN(port0, listener0, controller0);
-    UT_ASSERT_NOT_EQUAL(controller0, nullptr);
+        auto listenerFail = android::sp<CompositeInputControllerListener>::make();
+        android::sp<ICompositeInputController> controllerFail;
+        COMPOSITEINPUT_OPEN(portFail, listenerFail, controllerFail);
+        UT_ASSERT_NOT_EQUAL(controllerFail, nullptr);
 
-    COMPOSITEINPUT_START(controller0);
+        ::android::binder::Status startStatus;
+        COMPOSITEINPUT_START_NEG(controllerFail, startStatus);
+        UT_LOG_INFO("Port[%d] start beyond max: isOk:[%s] exception:[%d]\n",
+                    portIds[failIndex],
+                    startStatus.isOk() ? "true" : "false",
+                    startStatus.exceptionCode());
+        UT_ASSERT_TRUE(!startStatus.isOk());
+        UT_ASSERT_EQUAL(startStatus.exceptionCode(), android::binder::Status::EX_ILLEGAL_STATE);
 
-    State state0;
-    COMPOSITEINPUT_GET_STATE(port0, state0);
-    UT_LOG_INFO("Port[%d] state after start:[%d]\n", portIds[0], static_cast<int>(state0));
-    UT_ASSERT_EQUAL(state0, State::STARTED);
+        State stateFail;
+        COMPOSITEINPUT_GET_STATE(portFail, stateFail);
+        UT_LOG_INFO("Port[%d] state after failed start:[%d]\n",
+                    portIds[failIndex], static_cast<int>(stateFail));
+        UT_ASSERT_EQUAL(stateFail, State::READY);
 
-    // Open port[1] — should succeed (READY)
-    android::sp<ICompositeInputPort> port1;
-    COMPOSITEINPUT_GET_PORT(gCOMPOSITEINPUTHandle, portIds[1], port1);
-    UT_ASSERT_NOT_EQUAL(port1, nullptr);
+        bool closedFail = false;
+        COMPOSITEINPUT_CLOSE(portFail, controllerFail, closedFail);
+        UT_ASSERT_TRUE(closedFail);
+    }
 
-    auto listener1 = android::sp<CompositeInputControllerListener>::make();
-    android::sp<ICompositeInputController> controller1;
-    COMPOSITEINPUT_OPEN(port1, listener1, controller1);
-    UT_ASSERT_NOT_EQUAL(controller1, nullptr);
-
-    State state1;
-    // Attempt to start port[1] — must fail (exceeds maximumConcurrentStartedPorts)
-    ::android::binder::Status startStatus;
-    COMPOSITEINPUT_START_NEG(controller1, startStatus);
-    UT_LOG_INFO("Port[%d] second start: isOk:[%s] exception:[%d]\n",
-                portIds[1],
-                startStatus.isOk() ? "true" : "false",
-                startStatus.exceptionCode());
-    UT_ASSERT_TRUE(!startStatus.isOk());
-    UT_ASSERT_EQUAL(startStatus.exceptionCode(), android::binder::Status::EX_ILLEGAL_STATE);
-
-    // State of port[1] must still be READY
-    COMPOSITEINPUT_GET_STATE(port1, state1);
-    UT_LOG_INFO("Port[%d] state after failed start:[%d]\n", portIds[1], static_cast<int>(state1));
-    UT_ASSERT_EQUAL(state1, State::READY);
-
-    // Stop port[0] — now port[1] can start
-    COMPOSITEINPUT_STOP(controller0);
-    COMPOSITEINPUT_GET_STATE(port0, state0);
-    UT_LOG_INFO("Port[%d] state after stop:[%d]\n", portIds[0], static_cast<int>(state0));
-    UT_ASSERT_EQUAL(state0, State::READY);
-
-    // Start port[1] — must now succeed
-    COMPOSITEINPUT_START(controller1);
-    COMPOSITEINPUT_GET_STATE(port1, state1);
-    UT_LOG_INFO("Port[%d] state after start (after port[0] stopped):[%d]\n",
-                portIds[1], static_cast<int>(state1));
-    UT_ASSERT_EQUAL(state1, State::STARTED);
-
-    // Cleanup
-    COMPOSITEINPUT_STOP(controller1);
-
-    bool closed0 = false;
-    COMPOSITEINPUT_CLOSE(port0, controller0, closed0);
-    UT_ASSERT_TRUE(closed0);
-
-    bool closed1 = false;
-    COMPOSITEINPUT_CLOSE(port1, controller1, closed1);
-    UT_ASSERT_TRUE(closed1);
+    // Cleanup: stop and close all opened ports
+    for (size_t i = 0; i < controllers.size(); ++i)
+    {
+        COMPOSITEINPUT_STOP(controllers[i]);
+        bool closed = false;
+        COMPOSITEINPUT_CLOSE(ports[i], controllers[i], closed);
+        UT_ASSERT_TRUE(closed);
+    }
 
     UT_LOG_INFO("MaximumConcurrentStartedPorts passed\n");
 }

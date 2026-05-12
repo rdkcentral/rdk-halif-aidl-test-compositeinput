@@ -39,12 +39,12 @@ class VTS_COMPOSITEINPUT_L3_ConnectionTestAfterStart(compositeInputHelperClass):
 
     Validates that onConnectionChanged fires during OPENING and
     onSignalStatusChanged fires during STARTING. Then verifies that
-    subsequent signal status events (driven by the vcomponent) are
+    subsequent signal status events are
     received correctly while the port is in STARTED state.
 
     connection_sequence items:
-        False -> vcomponent sends NO_SIGNAL
-        True  -> vcomponent sends UNSTABLE followed by STABLE
+        False -> NO_SIGNAL
+        True  -> UNSTABLE followed by STABLE
     """
 
     def __init__(self, log: logModule = None):
@@ -67,7 +67,7 @@ class VTS_COMPOSITEINPUT_L3_ConnectionTestAfterStart(compositeInputHelperClass):
 
         Reads connection_sequence from the test config. For each item:
           - False -> sends NO_SIGNAL
-          - True  -> sends UNSTABLE then STABLE (matching vcomponent two-event pattern)
+          - True  -> sends UNSTABLE then STABLE
 
         An initial delay allows the C++ test to initialize and start the port.
         """

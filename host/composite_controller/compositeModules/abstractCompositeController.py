@@ -30,7 +30,7 @@ class CompositeInterface(ABC):
     def __init__(self, logger: logModule):
         """
         Abstract base class for composite input controllers.
-        Defines the interface for controlling the composite input vcomponent.
+        Defines the interface for controlling the composite input device.
         """
         self._log = logger
 

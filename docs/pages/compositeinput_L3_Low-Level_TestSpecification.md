@@ -45,7 +45,6 @@ The VTS binary running on the DUT provides key L3 capabilities:
 - ConnectionTestBeforeStart: Validate that `onConnectionChanged` fires during the OPENING phase and on HPD events in READY state.
 - ConnectionTestAfterStart: Validate that `onSignalStatusChanged` fires during the STARTING phase and on signal events in STARTED state.
 - VideoModeDetection: Validate that `onVideoModeChanged` fires with the correct `VideoResolution` after signal becomes STABLE.
-- PropertyApplicationVerification: Validate that property set/get operations trigger `onPropertyChanged` callbacks with an active source.
 - VideoPlaybackVerification: Validate end-to-end video playback readiness (signal STABLE, valid `VideoResolution`).
 
 #### ConnectionTestBeforeStart

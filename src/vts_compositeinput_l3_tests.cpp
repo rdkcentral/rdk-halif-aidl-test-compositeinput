@@ -40,12 +40,12 @@
  * ### L3 Test Cases for COMPOSITE INPUT HAL :
  *
  * This module includes Level 3 scenario tests requiring an active composite input
- * source connected via the vcomponent or a physical device. Tests verify real-world
+ * source connected via the physical device. Tests verify real-world
  * callback behaviour including connection detection, signal acquisition, video mode
  * reporting, property change notifications, and end-to-end video playback readiness.
  *
- * **Pre-Conditions:** vcomponent (Vendor-CompositeInput) must be running @n
- * **Dependencies:** vcomponent running with valid configuration @n
+ * **Pre-Conditions:** Physical composite input device must be connected @n
+ * **Dependencies:** None @n
  *
  * @endparblock
  */
@@ -158,7 +158,7 @@ public:
  *
  * Validates that ICompositeInputControllerListener::onConnectionChanged() is fired
  * at least once during the OPENING transition to report the initial cable presence
- * state before the port reaches READY. After READY the vcomponent drives HPD
+ * state before the port reaches READY. After READY the physical device drives HPD
  * plug/unplug events and the test verifies a callback fires for each event with
  * the correct connection state (TRUE on plug/powerON, FALSE on unplug/powerOFF).
  *
@@ -166,17 +166,17 @@ public:
  * **Test Case ID:** 001@n
  * **Priority:** High@n
  *
- * **Pre-Conditions:** vcomponent must be running @n
- * **User Interaction:** None (vcomponent drives connection events) @n
+ * **Pre-Conditions:** @n
+ * **User Interaction:** None - Python wrapper handles device connection automation @n
  *
  * **Test Procedure:**@n
  * | Variation / Step | Description | Test Data | Expected Result | Notes |
  * | :----: | --------- | ---------- |-------------- | ----- |
  * | 01 | Verify onConnectionChanged fires once during OPENING | portId from config | Callback received, state matches config connection_state | Should Pass |
- * | 02 | vcomponent drives HPD plug event in READY state | connection_sequence | onConnectionChanged(TRUE) received | Should Pass |
- * | 03 | vcomponent drives HPD unplug event in READY state | connection_sequence | onConnectionChanged(FALSE) received | Should Pass |
- * | 04 | vcomponent drives powerON event in READY state | connection_sequence | onConnectionChanged(TRUE) received | Should Pass |
- * | 05 | vcomponent drives powerOFF event in READY state | connection_sequence | onConnectionChanged(FALSE) received | Should Pass |
+ * | 02 | Perform HPD plug event in READY state | connection_sequence | onConnectionChanged(TRUE) received | Should Pass |
+ * | 03 | Perform HPD unplug event in READY state | connection_sequence | onConnectionChanged(FALSE) received | Should Pass |
+ * | 04 | Perform powerON event in READY state | connection_sequence | onConnectionChanged(TRUE) received | Should Pass |
+ * | 05 | Perform powerOFF event in READY state | connection_sequence | onConnectionChanged(FALSE) received | Should Pass |
  *
  * **Refer:** [compositeinput_High-Level_TestSpecification](../../docs/pages/compositeinput_High-Level_TestSpecification.md)
  */
@@ -227,8 +227,6 @@ UT_ADD_TEST(VTS_L3_COMPOSITEINPUT, ConnectionTestBeforeStart)
             UT_ASSERT_TRUE(received);
             UT_ASSERT_EQUAL(connected, cfg.connectionState);
 
-            /* In READY state the vcomponent drives HPD plug/unplug and powerON/powerOFF
-             * events; verify a callback fires for each entry in the connection sequence. */
             if (!cfg.connectionSequence.empty())
             {
                 bool seqReceived = controllerListener->waitForConnectionCount(
@@ -273,7 +271,7 @@ UT_ADD_TEST(VTS_L3_COMPOSITEINPUT, ConnectionTestBeforeStart)
  * NO_SIGNAL when no device is connected, STABLE when a device with valid signal
  * is already connected.
  *
- * After STARTED the vcomponent drives HPD plug/unplug and powerON/powerOFF
+ * After STARTED perform HPD plug/unplug and powerON/powerOFF
  * events; the test verifies that signal state sequences
  * (NO_SIGNAL → UNSTABLE → STABLE on connect, STABLE → NO_SIGNAL on disconnect)
  * are received via onSignalStatusChanged() callbacks.
@@ -282,8 +280,8 @@ UT_ADD_TEST(VTS_L3_COMPOSITEINPUT, ConnectionTestBeforeStart)
  * **Test Case ID:** 002@n
  * **Priority:** High@n
  *
- * **Pre-Conditions:** vcomponent must be running @n
- * **User Interaction:** None (vcomponent drives signal events) @n
+ * **Pre-Conditions:** @n
+ * **User Interaction:** None - Python wrapper handles device connection automation @n
  *
  * **Test Procedure:**@n
  * | Variation / Step | Description | Test Data | Expected Result | Notes |
@@ -291,8 +289,8 @@ UT_ADD_TEST(VTS_L3_COMPOSITEINPUT, ConnectionTestBeforeStart)
  * | 01 | Start composite input port | portId from config | Port transitions to STARTED | Should Pass |
  * | 02 | Verify onSignalStatusChanged fires during STARTING | none | Callback received | Should Pass |
  * | 03 | Verify initial signal state matches device connection state | connection_state | NO_SIGNAL (not connected) or STABLE (connected) | Should Pass |
- * | 04 | vcomponent drives HPD plug in STARTED state | connection_sequence | NO_SIGNAL → UNSTABLE → STABLE callbacks received | Should Pass |
- * | 05 | vcomponent drives HPD unplug in STARTED state | connection_sequence | STABLE → NO_SIGNAL callback received | Should Pass |
+ * | 04 | Perform HPD plug event in STARTED state | connection_sequence | NO_SIGNAL → UNSTABLE → STABLE callbacks received | Should Pass |
+ * | 05 | Perform HPD unplug event in STARTED state | connection_sequence | STABLE → NO_SIGNAL callback received | Should Pass |
  * | 06 | Stop and close port | none | Port closes successfully | Should Pass |
  *
  * **Refer:** [compositeinput_High-Level_TestSpecification](../../docs/pages/compositeinput_High-Level_TestSpecification.md)
@@ -365,8 +363,6 @@ UT_ADD_TEST(VTS_L3_COMPOSITEINPUT, ConnectionTestAfterStart)
                 UT_ASSERT_EQUAL(signalStatus, SignalStatus::NO_SIGNAL);
             }
 
-            /* In STARTED state the vcomponent drives HPD/powerON/powerOFF events.
-             * Verify the expected number of signal status callbacks are received. */
             if (cfg.expectSignalAfterConnect && !cfg.connectionSequence.empty())
             {
                 bool seqReceived = controllerListener->waitForConnectionCount(
@@ -442,7 +438,7 @@ UT_ADD_TEST(VTS_L3_COMPOSITEINPUT, ConnectionTestAfterStart)
  * also validates that the resolution reported in the callback matches the value
  * returned by ICompositeInputPort::getStatus().detectedResolution.
  *
- * Optionally, after the initial video mode is confirmed, the vcomponent may
+ * Optionally, after the initial video mode is confirmed, the composite input device may
  * switch the source video mode; the test verifies that onVideoModeChanged() fires
  * again with the updated resolution.
  *
@@ -450,8 +446,8 @@ UT_ADD_TEST(VTS_L3_COMPOSITEINPUT, ConnectionTestAfterStart)
  * **Test Case ID:** 003@n
  * **Priority:** High@n
  *
- * **Pre-Conditions:** vcomponent must be running with an active source connected @n
- * **User Interaction:** None (vcomponent provides video signal) @n
+ * **Pre-Conditions:** Composite input device must be running with an active source connected @n
+ * **User Interaction:** None (composite input device provides video signal) @n
  *
  * **Test Procedure:**@n
  * | Variation / Step | Description | Test Data | Expected Result | Notes |
@@ -578,8 +574,8 @@ UT_ADD_TEST(VTS_L3_COMPOSITEINPUT, VideoModeDetection)
  * **Test Case ID:** 005@n
  * **Priority:** High@n
  *
- * **Pre-Conditions:** vcomponent must be running with an active composite source @n
- * **User Interaction:** None (vcomponent provides video/audio signal) @n
+ * **Pre-Conditions:** Composite input device must be running with an active composite source @n
+ * **User Interaction:** None @n
  *
  * **Test Procedure:**@n
  * | Variation / Step | Description | Test Data | Expected Result | Notes |

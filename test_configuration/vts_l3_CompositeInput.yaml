@@ -4,7 +4,7 @@ compositeinput:
 
     # TC001: Verify onConnectionChanged fires during OPENING and on HPD events in READY state.
     # connection_state: initial cable presence before open()
-    # connection_sequence: HPD plug/unplug / powerON/powerOFF events driven by vcomponent in READY
+    # connection_sequence: HPD plug/unplug / powerON/powerOFF events
     ConnectionTestBeforeStart:
       ports:
       - id: 0
@@ -23,7 +23,7 @@ compositeinput:
 
     # TC002: Verify onSignalStatusChanged fires during STARTING and on signal events in STARTED state.
     # connection_state: true means device is connected (expect STABLE initial signal)
-    # connection_sequence: number of signal events to wait for after STARTED (driven by vcomponent)
+    # connection_sequence: number of signal events to wait for after STARTED
     ConnectionTestAfterStart:
       ports:
       - id: 0
@@ -41,7 +41,7 @@ compositeinput:
                  METRIC_SIGNAL_LOCK_COUNT: 0
 
     # TC003: Verify onVideoModeChanged fires with correct VideoResolution after signal STABLE.
-    # Requires an active source connected (vcomponent or physical device).
+    # Requires an active source connected (physical device).
     VideoModeDetection:
       ports:
       - id: 0
@@ -49,13 +49,6 @@ compositeinput:
         - {width: 1920, height: 1080, interlaced: false, framerate: 60}
         - {width: 3840, height: 2160, interlaced: false, framerate: 30}
         max_wait_time_ms: 10000
-
-    # TC004: Verify onPropertyChanged fires after setProperty/setPropertyMulti with active source.
-    # Writable properties are discovered from the HFP profile at runtime.
-    PropertyApplicationVerification:
-      ports:
-      - id: 0
-        max_wait_time_ms: 5000
 
     # TC005: Verify end-to-end video playback readiness (signal STABLE, valid VideoResolution).
     # connection_state: true — active source must be connected

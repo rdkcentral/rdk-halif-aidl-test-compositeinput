@@ -230,7 +230,7 @@ Host-side implementation is in `host/tests` and covers:
 2. **ConnectionTestAfterStart**
    - Triggers DUT-side validation during and after `start` (STARTING phase).
    - Verifies that `onSignalStatusChanged` fires at least once during STARTING.
-   - Validates connection and signal event sequences driven by vcomponent.
+   - Validates connection and signal event sequences.
 
 3. **VideoModeDetection**
    - Triggers DUT-side video mode detection after signal becomes STABLE.

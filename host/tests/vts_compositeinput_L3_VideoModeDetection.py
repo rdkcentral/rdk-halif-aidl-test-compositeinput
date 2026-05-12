@@ -38,10 +38,10 @@ class VTS_COMPOSITEINPUT_L3_VideoModeDetection(compositeInputHelperClass):
     Runs L3 VideoModeDetection test for composite input HAL.
 
     Validates that ICompositeInputControllerListener::onVideoModeChanged() fires
-    with the correct VideoResolution when the vcomponent reports a video mode.
+    with the correct VideoResolution when the compositeinput device reports video mode change.
     The test verifies two sequential video mode changes:
       1. videomode1 from the test config (initial signal)
-      2. videomode2 from the test config (vcomponent source switch)
+      2. videomode2 from the test config (composite input source switch)
     """
 
     def __init__(self, log: logModule = None):
