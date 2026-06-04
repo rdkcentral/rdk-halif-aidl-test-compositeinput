@@ -51,7 +51,7 @@ class manualCompositeController(CompositeInterface):
             prompt (str): SSH prompt string (unused).
             control_port (int): UT control plane port (unused).
         """
-        super().__init__(logger)
+        super().__init__(logger, address, username, password, port, prompt, control_port)
 
     def connectDevice(self, port: int, connected: bool):
         """
