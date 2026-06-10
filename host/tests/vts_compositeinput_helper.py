@@ -96,7 +96,7 @@ class compositeInputHelperClass(utHelperClass):
         self.testMenuConfiguration.test.execute = self.testMenuConfiguration.test.execute + f" -p {profileOnTarget}"
 
         # Establish HAL session
-        self.hal_session = self.dut.getConsoleSession("ssh_hal_test")
+        self.hal_session = self.dut.getConsoleSession("ssh_hal_test_0")
 
         # Initialize UT menu navigator and utilities
         self.utMenu = UTSuiteNavigatorClass(self.testMenuConfiguration, None, self.hal_session)
