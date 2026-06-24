@@ -46,7 +46,7 @@ class VTS_COMPOSITEINPUT_L3_ConnectionTestBeforeStart(compositeInputHelperClass)
     is started.
     """
 
-    def __init__(self, log: logModule = None):
+    def __init__(self, log: logModule = None, hfpfile:str=None, testMenuConfigFile=None, moduleName=None, artifactDirPath=None):
         """
         Initializes the L3 ConnectionTestBeforeStart test.
 
@@ -55,7 +55,7 @@ class VTS_COMPOSITEINPUT_L3_ConnectionTestBeforeStart(compositeInputHelperClass)
         """
         self.testName = "CompositeInput_L3_ConnectionTestBeforeStart"
         qcId = "1"
-        super().__init__(self.testName, qcId, log)
+        super().__init__(self.testName, qcId, log, hfpfile, testMenuConfigFile, moduleName, artifactDirPath)
 
         self.compositeController = CompositeController(
             self.log, self.dut.rawConfig.get("dut").get("compositeController"))
