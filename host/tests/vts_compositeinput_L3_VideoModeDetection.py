@@ -44,7 +44,7 @@ class VTS_COMPOSITEINPUT_L3_VideoModeDetection(compositeInputHelperClass):
       2. videomode2 from the test config (composite input source switch)
     """
 
-    def __init__(self, log: logModule = None):
+    def __init__(self, log: logModule = None, hfpfile:str=None, testMenuConfigFile=None, moduleName=None, artifactDirPath=None):
         """
         Initializes the L3 VideoModeDetection test.
 
@@ -53,7 +53,7 @@ class VTS_COMPOSITEINPUT_L3_VideoModeDetection(compositeInputHelperClass):
         """
         self.testName = "CompositeInput_L3_VideoModeDetection"
         qcId = "3"
-        super().__init__(self.testName, qcId, log)
+        super().__init__(self.testName, qcId, log, hfpfile, testMenuConfigFile, moduleName, artifactDirPath)
 
         self.compositeController = CompositeController(
             self.log, self.dut.rawConfig.get("dut").get("compositeController"))

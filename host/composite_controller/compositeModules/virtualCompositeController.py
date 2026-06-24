@@ -59,7 +59,7 @@ class virtualCompositeController(CompositeInterface):
             prompt (str): SSH prompt string. Defaults to '~#'.
             control_port (int): UT control plane port. Defaults to 8080.
         """
-        super().__init__(logger)
+        super().__init__(logger, address, username, password, port, prompt, control_port)
 
         self.control_port = control_port
         self.commandPrompt = prompt

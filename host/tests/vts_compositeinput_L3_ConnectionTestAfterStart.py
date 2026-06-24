@@ -47,7 +47,7 @@ class VTS_COMPOSITEINPUT_L3_ConnectionTestAfterStart(compositeInputHelperClass):
         True  -> UNSTABLE followed by STABLE
     """
 
-    def __init__(self, log: logModule = None):
+    def __init__(self, log: logModule = None, hfpfile:str=None, testMenuConfigFile=None, moduleName=None, artifactDirPath=None):
         """
         Initializes the L3 ConnectionTestAfterStart test.
 
@@ -56,7 +56,7 @@ class VTS_COMPOSITEINPUT_L3_ConnectionTestAfterStart(compositeInputHelperClass):
         """
         self.testName = "CompositeInput_L3_ConnectionTestAfterStart"
         qcId = "2"
-        super().__init__(self.testName, qcId, log)
+        super().__init__(self.testName, qcId, log, hfpfile, testMenuConfigFile, moduleName, artifactDirPath)
 
         self.compositeController = CompositeController(
             self.log, self.dut.rawConfig.get("dut").get("compositeController"))

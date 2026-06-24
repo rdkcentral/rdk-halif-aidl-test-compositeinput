@@ -27,7 +27,8 @@ from framework.core.logModule import logModule
 
 class CompositeInterface(ABC):
 
-    def __init__(self, logger: logModule):
+    def __init__(self, logger: logModule, address: str, username: str,
+                 password: str, port: int = 22, prompt: str = '~#', control_port: int = 8080):
         """
         Abstract base class for composite input controllers.
         Defines the interface for controlling the composite input device.
