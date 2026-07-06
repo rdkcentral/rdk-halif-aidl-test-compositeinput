@@ -410,8 +410,9 @@ build_halif_modules()
     component_version="${component_version:-$default_version}"
 
     local sdk_dir_arg=""
-    if [ "${TARGET}" = "arm" ] && [ -n "${BINDER_SDK_DIR:-}" ]; then
-        sdk_dir_arg="--sdk-dir ${BINDER_SDK_DIR}"
+    if [ "${TARGET}" = "arm" ]; then
+        export BINDER_ALLOW_CROSS_ENV=1
+        [ -n "${BINDER_SDK_DIR:-}" ] && sdk_dir_arg="--sdk-dir ${BINDER_SDK_DIR}"
     fi
 
     # For versioned snapshot builds, pre-stage dependency headers and build
