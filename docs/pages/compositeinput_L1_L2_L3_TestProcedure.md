@@ -68,7 +68,7 @@ The build.sh script:
 
 - Clones the `rdk-halif-aidl` repository and UT-Core framework.
 - Builds the Binder SDK via `rdk-halif-aidl/build_binder.sh`.
-- Resolves the `hdmioutput` component version from `rdk-halif-aidl/versions_released.yaml` and builds it into a versioned shared library (`libhdmioutput-v<version>-cpp.so`) via `rdk-halif-aidl/build_modules.sh hdmioutput`.
+- Resolves the `compositeinput` component version from `rdk-halif-aidl/versions_released.yaml` and builds it into a versioned shared library (`libcompositeinput-v<version>-cpp.so`) via `rdk-halif-aidl/build_modules.sh compositeinput`.
 - Creates unversioned softlinks (`lib<module>-cpp.so → lib<module>-v<version>-cpp.so`) and writes `halif_generated.mk` used by the Makefile.
 - Compiles the test suite.
 - Generates binaries in the `build/bin` directory.
