@@ -25,18 +25,6 @@
 
 ## Build the VTS
 
-### Build Linux binder
-
-The test suite depends on Linux binder with `AIDL` support.
-
-For detailed instructions, refer to: [Linux Binder](https://github.com/rdkcentral/linux_binder_idl/tree/1.0.0)
-
-```bash
-git clone -b develop 'https://github.com/rdkcentral/linux_binder_idl.git'
-cd linux_binder_idl
-./build-linux-binder-aidl.sh 64
-```
-
 ### Build VTS binaries
 
 Clone and build the Composite Input test suite:
@@ -46,20 +34,20 @@ git clone git@github.com:rdkcentral/rdk-halif-aidl-test-compositeinput.git
 cd rdk-halif-aidl-test-compositeinput
 ```
 
-Set environment variables:
+The Binder SDK is built automatically by `build.sh` via `rdk-halif-aidl/build_binder.sh` — no external binder setup is required.
 
-- `AIDL_BIN`: Path to the AIDL compiler.
-- `LINUX_BINDER_OUT_DIR`: Path to Linux binder output directory.
-- `UT_CORE_VERSION`: UT-Core version (optional; defaults to latest tag).
-- `RDK_HALIF_AIDL_VERSION`: AIDL HAL spec version (optional; defaults to latest HEAD).
+The following environment variables are optional:
+
+- `UT_CORE_VERSION`: Specific version of the UT-Core framework (e.g., `5.0.0`). Defaults to `5.1.0`.
+
+- `RDK_HALIF_AIDL_VERSION`: Branch, tag, or commit of `rdk-halif-aidl` to clone (e.g., `0.21.0`). Defaults to `main`. Component versions within it are resolved from `versions_released.yaml`.
 
 Example:
 
 ```bash
-export UT_CORE_VERSION=5.0.0
-export RDK_HALIF_AIDL_VERSION=0.15.0
-export AIDL_BIN=/path/to/linux_binder_idl/out/aidl
-export LINUX_BINDER_OUT_DIR=/path/to/linux_binder_idl/local/
+export UT_CORE_VERSION=5.1.0
+export RDK_HALIF_AIDL_VERSION=develop
+export UT_LOG_LEVEL=4
 ```
 
 Enable UT logs (optional):
@@ -76,8 +64,14 @@ Build:
 # Supported Targets: linux, arm
 ```
 
-Build output:
-- binaries under `build/bin`
+The build.sh script:
+
+- Clones the `rdk-halif-aidl` repository and UT-Core framework.
+- Builds the Binder SDK via `rdk-halif-aidl/build_binder.sh`.
+- Resolves the `hdmioutput` component version from `rdk-halif-aidl/versions_released.yaml` and builds it into a versioned shared library (`libhdmioutput-v<version>-cpp.so`) via `rdk-halif-aidl/build_modules.sh hdmioutput`.
+- Creates unversioned softlinks (`lib<module>-cpp.so → lib<module>-v<version>-cpp.so`) and writes `halif_generated.mk` used by the Makefile.
+- Compiles the test suite.
+- Generates binaries in the `build/bin` directory.
 - tarball `vts-CompositeInput.tar.gz` under `build/bin`
 
 ## Run L1 L2 Tests Without Python
