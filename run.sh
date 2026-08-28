@@ -21,5 +21,7 @@
 
 RUN_DIR=$(realpath "$(dirname "$0")")
 
+export LD_LIBRARY_PATH=${RUN_DIR}:${LD_LIBRARY_PATH}
+
 echo "Executing [vts_compositeinput_hal_test]"
 "${RUN_DIR}/vts_compositeinput_hal_test" "$@"
