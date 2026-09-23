@@ -69,8 +69,8 @@ extern const ut_control_keyStringMapping_t signalStatus_mapTable_compositeinput[
 extern const ut_control_keyStringMapping_t portProperty_mapTable_compositeinput[];
 
 std::string vecIntToString(std::vector<int32_t>& vals);
-SignalStatus convertStringToSignalStatus(const std::string& val);
-PortProperty convertStringToPortProperty(const std::string& propertyStr);
-PropertyMetadata::PropertyType convertStringToPropertyType(const std::string& typeStr);
+compositeinput::SignalStatus convertStringToSignalStatus(const std::string& val);
+compositeinput::PortProperty convertStringToPortProperty(const std::string& propertyStr);
+compositeinput::PropertyMetadata::PropertyType convertStringToPropertyType(const std::string& typeStr);
 
 #endif //__VTS_COMPOSITEINPUT_HELPER_H__
