@@ -79,37 +79,37 @@ std::string vecIntToString(std::vector<int32_t>& vals)
     return oss.str();
 }
 
-SignalStatus convertStringToSignalStatus(const std::string& val)
+compositeinput::SignalStatus convertStringToSignalStatus(const std::string& val)
 {
-    if (val == "NO_SIGNAL")  return SignalStatus::NO_SIGNAL;
-    if (val == "UNSTABLE")   return SignalStatus::UNSTABLE;
-    if (val == "STABLE")     return SignalStatus::STABLE;
+    if (val == "NO_SIGNAL")  return compositeinput::SignalStatus::NO_SIGNAL;
+    if (val == "UNSTABLE")   return compositeinput::SignalStatus::UNSTABLE;
+    if (val == "STABLE")     return compositeinput::SignalStatus::STABLE;
     UT_LOG_WARNING("Unknown SignalStatus string: %s, defaulting to NO_SIGNAL\n", val.c_str());
-    return SignalStatus::NO_SIGNAL;
+    return compositeinput::SignalStatus::NO_SIGNAL;
 }
 
-PortProperty convertStringToPortProperty(const std::string& propertyStr)
+compositeinput::PortProperty convertStringToPortProperty(const std::string& propertyStr)
 {
-    if (propertyStr == "SIGNAL_STRENGTH")             return PortProperty::SIGNAL_STRENGTH;
-    if (propertyStr == "SIGNAL_QUALITY")              return PortProperty::SIGNAL_QUALITY;
-    if (propertyStr == "METRIC_SIGNAL_LOCK_TIME")     return PortProperty::METRIC_SIGNAL_LOCK_TIME;
-    if (propertyStr == "METRIC_SIGNAL_DROPS")         return PortProperty::METRIC_SIGNAL_DROPS;
-    if (propertyStr == "METRIC_UPTIME")               return PortProperty::METRIC_UPTIME;
-    if (propertyStr == "METRIC_SIGNAL_LOCK_COUNT")    return PortProperty::METRIC_SIGNAL_LOCK_COUNT;
-    if (propertyStr == "METRIC_LAST_SIGNAL_LOCK_TIME") return PortProperty::METRIC_LAST_SIGNAL_LOCK_TIME;
-    if (propertyStr == "METRIC_LAST_RESET_TIMESTAMP") return PortProperty::METRIC_LAST_RESET_TIMESTAMP;
+    if (propertyStr == "SIGNAL_STRENGTH")             return compositeinput::PortProperty::SIGNAL_STRENGTH;
+    if (propertyStr == "SIGNAL_QUALITY")              return compositeinput::PortProperty::SIGNAL_QUALITY;
+    if (propertyStr == "METRIC_SIGNAL_LOCK_TIME")     return compositeinput::PortProperty::METRIC_SIGNAL_LOCK_TIME;
+    if (propertyStr == "METRIC_SIGNAL_DROPS")         return compositeinput::PortProperty::METRIC_SIGNAL_DROPS;
+    if (propertyStr == "METRIC_UPTIME")               return compositeinput::PortProperty::METRIC_UPTIME;
+    if (propertyStr == "METRIC_SIGNAL_LOCK_COUNT")    return compositeinput::PortProperty::METRIC_SIGNAL_LOCK_COUNT;
+    if (propertyStr == "METRIC_LAST_SIGNAL_LOCK_TIME") return compositeinput::PortProperty::METRIC_LAST_SIGNAL_LOCK_TIME;
+    if (propertyStr == "METRIC_LAST_RESET_TIMESTAMP") return compositeinput::PortProperty::METRIC_LAST_RESET_TIMESTAMP;
     UT_LOG_WARNING("Unknown PortProperty string: %s\n", propertyStr.c_str());
-    return PortProperty::SIGNAL_STRENGTH;
+    return compositeinput::PortProperty::SIGNAL_STRENGTH;
 }
 
-PropertyMetadata::PropertyType convertStringToPropertyType(const std::string& typeStr)
+compositeinput::PropertyMetadata::PropertyType convertStringToPropertyType(const std::string& typeStr)
 {
-    if (typeStr == "BOOLEAN") return PropertyMetadata::PropertyType::BOOLEAN;
-    if (typeStr == "INTEGER") return PropertyMetadata::PropertyType::INTEGER;
-    if (typeStr == "LONG")    return PropertyMetadata::PropertyType::LONG;
-    if (typeStr == "FLOAT")   return PropertyMetadata::PropertyType::FLOAT;
-    if (typeStr == "DOUBLE")  return PropertyMetadata::PropertyType::DOUBLE;
-    if (typeStr == "STRING")  return PropertyMetadata::PropertyType::STRING;
+    if (typeStr == "BOOLEAN") return compositeinput::PropertyMetadata::PropertyType::BOOLEAN;
+    if (typeStr == "INTEGER") return compositeinput::PropertyMetadata::PropertyType::INTEGER;
+    if (typeStr == "LONG")    return compositeinput::PropertyMetadata::PropertyType::LONG;
+    if (typeStr == "FLOAT")   return compositeinput::PropertyMetadata::PropertyType::FLOAT;
+    if (typeStr == "DOUBLE")  return compositeinput::PropertyMetadata::PropertyType::DOUBLE;
+    if (typeStr == "STRING")  return compositeinput::PropertyMetadata::PropertyType::STRING;
     UT_LOG_WARNING("Unknown PropertyType string: %s, defaulting to BOOLEAN\n", typeStr.c_str());
-    return PropertyMetadata::PropertyType::BOOLEAN;
+    return compositeinput::PropertyMetadata::PropertyType::BOOLEAN;
 }
