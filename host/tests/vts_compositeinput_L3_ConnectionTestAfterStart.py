@@ -29,9 +29,9 @@ import threading
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(dir_path, "../"))
 
-from rdk_raft.controller import Controller
 from raft.framework.core.logModule import logModule
 from vts_compositeinput_helper import compositeInputHelperClass, COMPOSITEINPUT_L3_TEST_SUITE_NAME
+from rdk_raft.controller import Controller
 
 class VTS_COMPOSITEINPUT_L3_ConnectionTestAfterStart(compositeInputHelperClass):
     """
