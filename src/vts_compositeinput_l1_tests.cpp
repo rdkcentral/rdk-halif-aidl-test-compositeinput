@@ -1583,7 +1583,7 @@ UT_ADD_TEST(VTS_L1_COMPOSITEINPUT, setProperty_pos)
                     pv.value = com::rdk::hal::PropertyValue::Value::make<com::rdk::hal::PropertyValue::Value::Tag::doubleValue>(0.0);
                     break;
                 case PropertyMetadata::PropertyType::STRING:
-                    pv.value = com::rdk::hal::PropertyValue::Value::make<com::rdk::hal::PropertyValue::Value::Tag::stringValue>(android::String16(""));
+                    pv.value = com::rdk::hal::PropertyValue::Value::make<com::rdk::hal::PropertyValue::Value::Tag::stringValue>(std::string(""));
                     break;
                 default:
                     pv.value = com::rdk::hal::PropertyValue::Value::make<com::rdk::hal::PropertyValue::Value::Tag::intValue>(int32_t(0));
@@ -1802,7 +1802,7 @@ UT_ADD_TEST(VTS_L1_COMPOSITEINPUT, setPropertyMulti_pos)
                     kv.value.value = com::rdk::hal::PropertyValue::Value::make<com::rdk::hal::PropertyValue::Value::Tag::doubleValue>(0.0);
                     break;
                 case PropertyMetadata::PropertyType::STRING:
-                    kv.value.value = com::rdk::hal::PropertyValue::Value::make<com::rdk::hal::PropertyValue::Value::Tag::stringValue>(android::String16(""));
+                    kv.value.value = com::rdk::hal::PropertyValue::Value::make<com::rdk::hal::PropertyValue::Value::Tag::stringValue>(std::string(""));
                     break;
                 default:
                     kv.value.value = com::rdk::hal::PropertyValue::Value::make<com::rdk::hal::PropertyValue::Value::Tag::intValue>(int32_t(0));
